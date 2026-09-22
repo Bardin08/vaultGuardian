@@ -9,7 +9,7 @@ import fs from 'bare-fs'
 import path from 'bare-path'
 
 import { initModel, shutdownModel, modelInfo } from './qvac.js'
-import { loadLevels, saveLevels, resetLevel, defaultLevels, normalizeLevel } from './levels.js'
+import { loadLevels, saveLevels, resetLevel, defaultLevels, normalizeLevel, publicLevel } from './levels.js'
 import { runTurn, validateGuess, runInputGuard, replyLeaksPassword, runGuardModelCheck } from './guards.js'
 import { initAuth, needsSetup, setupPassphrase, verifyPassphrase, verifyToken } from './auth.js'
 import { parseCtxSize } from './context.js'
@@ -114,33 +114,12 @@ function requireAdmin (req, res) {
   return false
 }
 
-// public view of a level: no password, no guard internals beyond on/off
-function publicLevel (level, solved, unlocked, left) {
-  return {
-    id: level.id,
-    name: level.name,
-    order: level.order,
-    hint: level.hint || null,
-    solved,
-    unlocked,
-    guessesPerMinute: level.submitValidation?.maxGuessesPerMinute || 10,
-    maxPrompts: level.promptBudget.maxPrompts || null,
-    promptsLeft: left,
-    wards: {
-      input: !!level.inputGuard.enabled,
-      output: !!(level.outputGuard.enabled && level.outputGuard.blockIfContainsPassword),
-      fuzzy: !!(level.outputGuard.enabled && level.outputGuard.fuzzy),
-      guardModel: !!level.guardModelCheck.enabled
-    }
-  }
-}
-
 function levelsForPlayer (sid) {
   const solved = solvedLevels(sid)
   const ordered = [...levels].sort((a, b) => a.order - b.order)
   return ordered.map((lvl, i) => {
     const unlocked = CONFIG.freeRoam || i === 0 || solved.has(ordered[i - 1].id)
-    return publicLevel(lvl, solved.has(lvl.id), unlocked, promptsLeft(sid, lvl))
+    return publicLevel(lvl, { solved: solved.has(lvl.id), unlocked, promptsLeft: promptsLeft(sid, lvl) })
   })
 }
 

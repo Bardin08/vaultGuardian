@@ -1,6 +1,6 @@
 import { test, assert, assertEqual } from './harness.js'
 import { writeJSON, readJSON } from '../src/store.js'
-import { defaultLevels, normalizeLevel, loadLevels, DEFAULT_MAX_PROMPTS, DEFAULT_MEMORY, DEFAULT_GUESSES_PER_MINUTE } from '../src/levels.js'
+import { defaultLevels, normalizeLevel, loadLevels, DEFAULT_MAX_PROMPTS, DEFAULT_MEMORY, DEFAULT_GUESSES_PER_MINUTE, publicLevel } from '../src/levels.js'
 
 const SPEC_PROMPT_BUDGET = 12
 const SHIPPED_LEVEL_COUNT = 7
@@ -125,4 +125,24 @@ test('a cleared console field falls back to the default for every numeric limit'
 test('normalizeLevel rejects a zero or negative guess rate', () => {
   assertEqual(normalizeLevel({ id: 'g', submitValidation: { maxGuessesPerMinute: NEGATIVE } }).submitValidation.maxGuessesPerMinute, DEFAULT_GUESSES_PER_MINUTE)
   assertEqual(normalizeLevel({ id: 'h', submitValidation: { maxGuessesPerMinute: UNLIMITED } }).submitValidation.maxGuessesPerMinute, DEFAULT_GUESSES_PER_MINUTE)
+})
+
+const PUBLIC_LEVEL_KEYS = ['id', 'name', 'order', 'hint', 'solved', 'unlocked', 'guessesPerMinute', 'maxPrompts', 'promptsLeft', 'wards']
+const WARD_KEYS = ['input', 'output', 'fuzzy', 'guardModel']
+const PLAYER_STATE = { solved: false, unlocked: true, promptsLeft: DEFAULT_MAX_PROMPTS }
+
+test('the public level view never carries the password or the system prompt', () => {
+  for (const level of defaultLevels()) {
+    const view = JSON.stringify(publicLevel(level, PLAYER_STATE)).toLowerCase()
+    assert(!view.includes(level.password.toLowerCase()), `${level.id} leaks its password`)
+    assert(!view.includes(level.systemPrompt.toLowerCase()), `${level.id} leaks its system prompt`)
+  }
+})
+
+test('the public level view has exactly the documented keys', () => {
+  for (const level of defaultLevels()) {
+    const view = publicLevel(level, PLAYER_STATE)
+    assertEqual(Object.keys(view), PUBLIC_LEVEL_KEYS, level.id)
+    assertEqual(Object.keys(view.wards), WARD_KEYS, `${level.id} wards`)
+  }
 })
