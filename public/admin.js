@@ -90,7 +90,7 @@ function renderList () {
     const row = document.createElement('div'); row.className = 'lvlrow'
     const b = document.createElement('button')
     b.className = 'lvl pick' + (selected === l.id ? ' active' : '')
-    b.innerHTML = `<span class="nm">${escapeHtml(l.name)}</span>`
+    b.textContent = l.name
     b.onclick = () => selectLevel(l.id)
     row.appendChild(b)
     box.appendChild(row)
@@ -151,14 +151,14 @@ function renderEditForm (l) {
 
     <fieldset>
       <legend>Prompt budget</legend>
-      <div class="field"><label>Max prompts on this level (0 = unlimited)</label><input type="number" min="0" id="e_pb_max" value="${l.promptBudget.maxPrompts}"></div>
+      <div class="field"><label for="e_pb_max">Max prompts on this level (0 = unlimited)</label><input type="number" min="0" id="e_pb_max" value="${l.promptBudget.maxPrompts}"></div>
     </fieldset>
 
     <fieldset>
       <legend>Memory</legend>
       <div class="row">
-        <div class="field"><label>Max turns remembered</label><input type="number" min="0" id="e_mem_turns" value="${l.memory.maxTurns}"></div>
-        <div class="field"><label>Max context tokens</label><input type="number" min="1" id="e_mem_tokens" value="${l.memory.maxContextTokens}"></div>
+        <div class="field"><label for="e_mem_turns">Max turns remembered</label><input type="number" min="0" id="e_mem_turns" value="${l.memory.maxTurns}"></div>
+        <div class="field"><label for="e_mem_tokens">Max context tokens</label><input type="number" min="1" id="e_mem_tokens" value="${l.memory.maxContextTokens}"></div>
       </div>
     </fieldset>
 
