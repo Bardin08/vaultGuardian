@@ -24,6 +24,16 @@ test('legacy progress arrays load as solved levels, and forged keys are dropped'
   assertEqual(Object.keys(readJSON('progress.json', {})), [sid])
 })
 
+test('loaded progress rejects a non-array solved value and non-integer or negative prompt counts', () => {
+  const sid = newSessionId()
+  writeJSON('progress.json', { [sid]: { solved: 'l1', promptsUsed: { l1: '9', l2: -1, l3: 2 } } })
+  initSessions()
+  assertEqual(solvedLevels(sid).size, 0)
+  assertEqual(promptsLeft(sid, { id: 'l1', promptBudget: { maxPrompts: BUDGET } }), BUDGET)
+  assertEqual(promptsLeft(sid, { id: 'l2', promptBudget: { maxPrompts: BUDGET } }), BUDGET)
+  assertEqual(promptsLeft(sid, { id: 'l3', promptBudget: { maxPrompts: BUDGET } }), BUDGET - 2)
+})
+
 test('spending counts down and refuses at zero', () => {
   const sid = newSessionId()
   assert(spendPrompt(sid, LIMITED), 'first send refused')

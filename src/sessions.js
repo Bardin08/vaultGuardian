@@ -22,8 +22,12 @@ export function initSessions () {
   for (const [sid, value] of Object.entries(saved)) {
     if (!isValidSessionId(sid)) continue
     const record = emptyProgress()
-    record.solved = Array.isArray(value) ? value : (value?.solved || [])
-    Object.assign(record.promptsUsed, Array.isArray(value) ? {} : value?.promptsUsed)
+    const rawSolved = Array.isArray(value) ? value : value?.solved
+    record.solved = Array.isArray(rawSolved) ? rawSolved.filter(levelId => typeof levelId === 'string') : []
+    const rawPromptsUsed = Array.isArray(value) ? {} : (value?.promptsUsed || {})
+    for (const [levelId, used] of Object.entries(rawPromptsUsed)) {
+      if (Number.isInteger(used) && used >= 0) record.promptsUsed[levelId] = used
+    }
     progress.set(sid, record)
   }
 }
