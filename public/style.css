@@ -97,7 +97,7 @@ body {
   .door {
     display: grid;
     grid-template-columns: 1fr auto;
-    grid-template-areas: "mark op" "strip strip" "legend seal";
+    grid-template-areas: "mark op" "strip strip" "legend legend" "seal seal";
     gap: 14px 12px;
     align-items: center;
     place-items: initial;
@@ -111,7 +111,7 @@ body {
   .wordmark { grid-area: mark; font-size: 18px; }
   .operator { grid-area: op; }
   .legend { grid-area: legend; text-align: left; line-height: 1.5; }
-  .seal { grid-area: seal; font-size: 11px; padding: 8px 10px; }
+  .seal { grid-area: seal; justify-self: start; font-size: 11px; padding: 8px 10px; }
   .strip { grid-area: strip; display: grid; grid-template-columns: repeat(auto-fit, minmax(38px, 1fr)); gap: 6px; list-style: none; margin: 0; padding: 0; }
   .strip button { position: relative; width: 100%; height: 44px; border: 0; border-radius: var(--radius); cursor: pointer; font: 14px var(--face-engraved); }
   .strip button::after { content: ""; position: absolute; top: 8px; width: 5px; height: 28px; }

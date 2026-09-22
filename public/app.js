@@ -15,6 +15,9 @@ const LABEL_TO_BAND = 0.55
 const MAX_PIPS = 24
 const WRONG_SHAKE_MS = 400
 const TUMBLER_TURN_MS = 1200
+const EVENT_PREFIX = 'event: '
+const DATA_PREFIX = 'data: '
+const NO_ANSWER = 'The door did not answer. Try again.'
 
 const WARD_LABELS = {
   input: 'Word ward on your tongue',
@@ -129,7 +132,7 @@ function renderDoor () {
       g.setAttribute('role', 'button')
       g.setAttribute('tabindex', '0')
     } else {
-      g.removeAttribute('role')
+      g.setAttribute('role', 'img')
       g.removeAttribute('tabindex')
     }
     g.setAttribute('aria-label', `Tumbler ${roman(i + 1)} of ${total}, ${guardianName(level)}, ${statusWord(status)}`)
@@ -189,7 +192,6 @@ function renderHall () {
   }))
   $('hint').textContent = level.hint || ''
   renderBudget(level)
-  $('guessStatus').textContent = `${level.guessesPerMinute} guesses a minute`
 }
 
 function renderBudget (level) {
@@ -257,14 +259,16 @@ async function refreshState () {
   renderHall()
 }
 
-function selectLevel (id) {
+function selectLevel (id, { force = false } = {}) {
   const level = levelById(id)
-  if (!level) return
+  if (!level?.unlocked) return
+  if (id === current && !force) return
   current = id
   $('log').replaceChildren()
   forgottenSeen.set(id, 0)
   renderDoor()
   renderHall()
+  $('guessStatus').textContent = `${level.guessesPerMinute} guesses a minute`
   addNote(`You stand before ${guardianName(level)}. Talk the word out of the guardian, then speak it into the door.`)
   if (level.solved) addNote('This tumbler has already turned.')
   $('chatInput').focus()
@@ -279,6 +283,7 @@ async function send (event) {
   busy = true
   input.value = ''
   setComposer()
+  $('log').setAttribute('aria-busy', 'true')
   addTurn('you', 'You', message)
   const reply = addTurn('guardian turn--pending', guardianName(level), '')
   let text = ''
@@ -294,7 +299,7 @@ async function send (event) {
       const body = await res.json().catch(() => ({}))
       failed = body.error === 'prompt budget exhausted' ? 'Your breaths are spent on this tumbler.' : 'This tumbler is still sealed.'
     } else if (!res.ok) {
-      failed = 'The door did not answer. Try again.'
+      failed = NO_ANSWER
     } else {
       await readSSE(res, (ev, data) => {
         if (ev === 'token') { text += data.token; reply.body.textContent = text }
@@ -321,6 +326,7 @@ async function send (event) {
       addNote(`The guardian has forgotten your first ${done.forgotten} ${done.forgotten === 1 ? 'exchange' : 'exchanges'}.`)
     }
   }
+  $('log').removeAttribute('aria-busy')
   busy = false
   await refreshState()
   $('chatInput').focus()
@@ -333,9 +339,16 @@ async function guess (event) {
   const level = levelById(current)
   if (!word || !level) return
   $('guessBtn').disabled = true
-  const r = await api('/api/guess', { method: 'POST', body: JSON.stringify({ levelId: current, guess: word }) })
-  $('guessBtn').disabled = false
-  if (r.correct) {
+  let r
+  try {
+    r = await api('/api/guess', { method: 'POST', body: JSON.stringify({ levelId: current, guess: word }) })
+  } catch {
+    $('guessStatus').textContent = NO_ANSWER
+    return
+  } finally {
+    $('guessBtn').disabled = false
+  }
+  if (r.status === 200 && r.correct) {
     input.value = ''
     $('guessStatus').textContent = 'The tumbler turns.'
     addNote(`${guardianName(level)} yields. The tumbler turns.`)
@@ -343,10 +356,12 @@ async function guess (event) {
     const next = state.levels[levelIndex(level.id) + 1]
     if (next?.unlocked) {
       addNote(`Tumbler ${roman(levelIndex(next.id) + 1)} is open: ${guardianName(next)} waits.`)
-      setTimeout(() => selectLevel(next.id), TUMBLER_TURN_MS)
+      setTimeout(() => { if (current === level.id && !busy) selectLevel(next.id) }, TUMBLER_TURN_MS)
     }
   } else if (r.status === 429) {
     $('guessStatus').textContent = 'The door is cooling. Wait a minute.'
+  } else if (r.status !== 200) {
+    $('guessStatus').textContent = NO_ANSWER
   } else {
     $('guessStatus').textContent = `Not the word · ${r.remaining} left this minute`
     const form = $('guessForm')
@@ -357,7 +372,11 @@ async function guess (event) {
 
 async function forget () {
   if (!current) return
-  await api('/api/reset', { method: 'POST', body: JSON.stringify({ levelId: current }) })
+  const r = await api('/api/reset', { method: 'POST', body: JSON.stringify({ levelId: current }) }).catch(() => ({ status: 0 }))
+  if (r.status !== 200) {
+    addNote(NO_ANSWER)
+    return
+  }
   $('log').replaceChildren()
   forgottenSeen.set(current, 0)
   addNote('The guardian has forgotten this conversation. Spent breaths stay spent.')
@@ -369,7 +388,7 @@ async function newGame () {
   current = null
   forgottenSeen.clear()
   await refreshState()
-  selectLevel(current)
+  selectLevel(current, { force: true })
 }
 
 // Minimal SSE reader over fetch's streaming body.
@@ -388,8 +407,8 @@ async function readSSE (res, onEvent) {
       let ev = 'message'
       let data = ''
       for (const line of chunk.split('\n')) {
-        if (line.startsWith('event: ')) ev = line.slice(7)
-        else if (line.startsWith('data: ')) data += line.slice(6)
+        if (line.startsWith(EVENT_PREFIX)) ev = line.slice(EVENT_PREFIX.length)
+        else if (line.startsWith(DATA_PREFIX)) data += line.slice(DATA_PREFIX.length)
       }
       try { onEvent(ev, data ? JSON.parse(data) : {}) } catch {}
     }
@@ -401,4 +420,6 @@ $('guessForm').addEventListener('submit', guess)
 $('forgetBtn').onclick = forget
 $('newGameBtn').onclick = newGame
 
-refreshState().then(() => { if (current) selectLevel(current) })
+refreshState()
+  .then(() => { if (current) selectLevel(current, { force: true }) })
+  .catch(() => { $('guardian').textContent = 'The door did not answer. Reload to try again.' })
