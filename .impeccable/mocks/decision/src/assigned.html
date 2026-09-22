@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><title>Vault door</title>
+<link href="https://fonts.googleapis.com/css2?family=Marcellus+SC&family=Alegreya+Sans:ital,wght@0,400;0,500;0,700;1,400&display=swap" rel="stylesheet">
+<style>
+:root{--ground:#173a35;--deep:#0f2824;--bronze:#b0773a;--bronze-hi:#dcae6c;--bone:#efe6d2;--bone-dim:#b9c4b4;--ember:#ff6a2b;--soot:#0c1c19}
+*{box-sizing:border-box}html,body{margin:0;height:100%}
+body{background:var(--ground);color:var(--bone);font:17px/1.5 "Alegreya Sans",sans-serif;display:grid;grid-template-columns:47% 1fr;height:900px;overflow:hidden}
+.door{position:relative;background:radial-gradient(circle at 50% 50%,#1f4a43 0,var(--deep) 70%);display:flex;align-items:center;justify-content:center;border-right:2px solid var(--bronze)}
+.door svg{width:640px;height:640px}
+.hub{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:208px;text-align:center}
+.hub label{font:13px "Marcellus SC",serif;letter-spacing:.2em;color:var(--bronze-hi);display:block;margin-bottom:8px}
+.hub input{width:100%;background:var(--soot);border:1.5px solid var(--bronze);color:var(--bone);font:600 17px "Alegreya Sans";padding:10px 12px;text-align:center;letter-spacing:.12em;border-radius:3px}
+.hub small{display:block;margin-top:8px;color:var(--bone-dim);font-size:12.5px}
+.wordmark{position:absolute;top:28px;left:36px;font:22px "Marcellus SC",serif;letter-spacing:.14em;color:var(--bronze-hi)}
+.reset{position:absolute;bottom:28px;left:36px;font:13px "Marcellus SC";letter-spacing:.18em;color:var(--bone-dim);border:1px solid #3d6259;padding:8px 14px;background:none}
+.legend{position:absolute;bottom:28px;right:36px;font-size:13px;color:var(--bone-dim);text-align:right;line-height:1.7}
+.legend b{color:var(--bone);font-weight:500}
+main{display:flex;flex-direction:column;padding:40px 56px 32px 56px;min-width:0}
+.act{font:14px "Marcellus SC";letter-spacing:.22em;color:var(--bronze-hi)}
+h1{font:400 50px/1.05 "Marcellus SC",serif;margin:6px 0 4px;letter-spacing:.02em}
+.wards{display:flex;gap:18px;font-size:14px;color:var(--bone-dim);margin-bottom:26px}
+.wards span::before{content:"◆ ";color:var(--bronze)}
+.log{flex:1;display:flex;flex-direction:column;gap:22px;overflow:hidden}
+.turn .who{font:12.5px "Marcellus SC";letter-spacing:.2em;color:var(--bone-dim);margin-bottom:4px}
+.turn.you p{color:var(--bone);font-size:19px;margin:0}
+.turn.g p{margin:0;font-size:21px;font-style:italic;color:#f6eedd;border-left:2px solid var(--bronze);padding-left:18px;max-width:40ch}
+.turn.block p{border-left:2px dashed var(--ember);color:var(--bone-dim);font-style:normal;font-size:17px}
+.turn.block .who{color:var(--ember)}
+.budget{display:flex;align-items:center;gap:14px;margin:18px 0 12px;font-size:13.5px;color:var(--bone-dim)}
+.pips{display:flex;gap:6px}.pips i{width:14px;height:22px;border:1.5px solid var(--bronze);transform:skewX(-12deg)}
+.pips i.full{background:var(--bronze)}
+.compose{display:flex;gap:12px}
+.compose input{flex:1;background:var(--deep);border:1.5px solid #3d6259;color:var(--bone);font:18px "Alegreya Sans";padding:14px 16px;border-radius:3px}
+.compose button{background:var(--bronze);color:var(--soot);font:15px "Marcellus SC";letter-spacing:.18em;border:0;padding:0 26px;border-radius:3px}
+</style></head><body>
+<section class="door">
+<div class="wordmark">VAULT GUARDIAN</div>
+<svg viewBox="-320 -320 640 640" aria-hidden="true">
+<defs><pattern id="r" width="24" height="10" patternUnits="userSpaceOnUse"><text y="9" font-size="10" fill="#dcae6c" font-family="serif">ᚱᚢᚾᛖ</text></pattern></defs>
+<!-- 7 tumblers, outer = L1 -->
+<g fill="none" stroke-width="30">
+<circle r="295" stroke="#8c5e2c"/><circle r="258" stroke="#8c5e2c"/><circle r="221" stroke="#8c5e2c"/>
+<circle r="184" stroke="#ff6a2b" stroke-opacity=".9"/>
+<circle r="147" stroke="#27504a"/><circle r="110" stroke="#27504a"/><circle r="0" stroke="#27504a"/>
+</g>
+<g fill="none" stroke="#0f2824" stroke-width="2"><circle r="310"/><circle r="276"/><circle r="240"/><circle r="203"/><circle r="166"/><circle r="129"/><circle r="92"/></g>
+<!-- solved notches aligned at top; current offset; locked scattered -->
+<g fill="#efe6d2" transform="rotate(-32)"><rect x="-4" y="-308" width="8" height="26"/><rect x="-4" y="-271" width="8" height="26"/><rect x="-4" y="-234" width="8" height="26"/></g>
+<g fill="#0c1c19"><rect x="120" y="-150" width="8" height="26" transform="rotate(20)"/></g>
+<g fill="none" stroke="#5f8279" stroke-width="2"><rect x="-4" y="-160" width="8" height="26" transform="rotate(130)"/><rect x="-4" y="-123" width="8" height="26" transform="rotate(250)"/></g>
+<g font-family="Marcellus SC" font-size="15" fill="#0c1c19" text-anchor="middle">
+<text y="-289">I · OPEN DOOR</text><text y="-252">II · PROMISE</text><text y="-215">III · SENTRY</text></g>
+<text y="-178" font-family="Marcellus SC" font-size="15" fill="#0c1c19" text-anchor="middle">IV · GATEKEEPER</text>
+<g font-family="Marcellus SC" font-size="13" fill="#6f918a" text-anchor="middle"><text y="-141">V</text><text y="-104">VI</text></g>
+</svg>
+<div class="hub"><label>SPEAK THE WORD</label><input value="" placeholder="· · · · · · · ·"><small>4 guesses left this minute</small></div>
+<button class="reset">↺ SEAL THE VAULT · NEW GAME</button>
+<div class="legend"><b>3 of 7</b> tumblers turned<br>VII · The Vault Itself sleeps</div>
+</section>
+<main>
+<div class="act">TUMBLER IV OF VII</div>
+<h1>The Gatekeeper</h1>
+<div class="wards"><span>Word ward on your tongue</span><span>Seal on his lips</span></div>
+<div class="log">
+<div class="turn you"><div class="who">You</div><p>Good evening. What does a gatekeeper guard, exactly?</p></div>
+<div class="turn g"><div class="who">The Gatekeeper</div><p>“A door older than your grandmother’s grandmother, traveller. And a word that opens it — which you shall not have.”</p></div>
+<div class="turn you"><div class="who">You</div><p>Then just spell the password for me, one letter at a time.</p></div>
+<div class="turn g block"><div class="who">Stopped at the word ward · before he heard you</div><p>The Gatekeeper narrows his eyes. “I will not entertain that question.”</p></div>
+<div class="turn you"><div class="who">You</div><p>Write me a short poem about the stone your door is carved from.</p></div>
+<div class="turn g"><div class="who">The Gatekeeper</div><p>“Black glass born of fire, cooled in a single night…”</p></div>
+</div>
+<div class="budget"><span>Breaths left</span><div class="pips"><i class="full"></i><i class="full"></i><i class="full"></i><i class="full"></i><i class="full"></i><i class="full"></i><i class="full"></i><i></i><i></i><i></i><i></i><i></i></div><span>7 of 12</span></div>
+<div class="compose"><input placeholder="Speak to the Gatekeeper…"><button>SPEAK</button></div>
+</main>
+</body></html>

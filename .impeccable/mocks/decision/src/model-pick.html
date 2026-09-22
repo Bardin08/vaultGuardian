@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><title>JRPG</title>
+<link href="https://fonts.googleapis.com/css2?family=Pixelify+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{--sky:#2b5bd7;--grass:#3f9b3a;--win1:#0b1466;--win2:#1d2fa8;--white:#fff;--gold:#ffd84a;--red:#ff4b4b}
+*{box-sizing:border-box}html,body{margin:0}
+body{width:1440px;height:900px;overflow:hidden;font:22px/1.45 "Pixelify Sans",monospace;color:var(--white);image-rendering:pixelated;
+background:linear-gradient(#123c9c 0 38%,#1d56c9 38% 55%,#2e7a2e 55% 57%,#276a28 57%)}
+.win{background:linear-gradient(var(--win2),var(--win1));border:4px solid var(--white);box-shadow:0 0 0 4px #000,inset 0 0 0 3px #000;border-radius:10px;padding:18px 24px}
+.map{position:absolute;top:24px;left:24px;right:24px;display:flex;align-items:center;gap:0;height:92px;padding:0 28px}
+.map .node{display:flex;flex-direction:column;align-items:center;flex:1;font-size:16px;color:#c9d2ff}
+.map .node b{width:34px;height:40px;background:#7a86c8;clip-path:polygon(20% 100%,20% 30%,0 30%,0 0,25% 0,25% 12%,40% 12%,40% 0,60% 0,60% 12%,75% 12%,75% 0,100% 0,100% 30%,80% 30%,80% 100%)}
+.map .node.done b{background:var(--gold)}.map .node.now b{background:var(--red);outline:none}.map .node.now{color:var(--white)}
+.map .node.done{color:var(--gold)}
+.map .path{flex:.6;height:4px;background:repeating-linear-gradient(90deg,#fff 0 8px,transparent 8px 14px)}
+.stage{position:absolute;top:150px;left:0;right:0;height:360px}
+.sprite{position:absolute;left:560px;top:30px;width:320px;height:320px}
+.stats{position:absolute;right:24px;top:150px;width:300px;font-size:19px}
+.stats h3{margin:0 0 6px;font-size:18px;color:var(--gold);font-weight:500}
+.bar{height:16px;border:3px solid #fff;margin:4px 0 12px;background:#000}.bar i{display:block;height:100%;width:58%;background:#4be0ff}
+.bar.hp i{width:100%;background:#6dff6d}
+.wards{position:absolute;left:24px;top:150px;width:300px;font-size:18px}
+.wards li{list-style:none;margin:4px 0}.wards ul{padding:0;margin:0}
+.wards .on{color:var(--white)}.wards .off{color:#6c76b8;text-decoration:line-through}
+.dialog{position:absolute;left:24px;right:340px;bottom:24px;height:356px;display:flex;flex-direction:column}
+.dialog .log{flex:1;overflow:hidden;display:flex;flex-direction:column;gap:10px}
+.dialog .n{color:var(--gold)}.dialog .you{color:#9fe8ff}.dialog .blk{color:var(--red)}
+.dialog .input{border-top:3px dotted #fff;padding-top:12px;display:flex;gap:10px;align-items:center}
+.dialog .input span{flex:1;color:#aab3f0}
+.menu{position:absolute;right:24px;bottom:24px;width:300px;height:356px;font-size:22px}
+.menu div{padding:6px 0}.menu .sel::before{content:"▶ ";color:var(--gold)}.menu div:not(.sel){padding-left:30px}
+.menu .guess{margin-top:14px;border:3px solid #fff;padding:10px 12px;font-size:18px;color:#aab3f0}
+.menu .note{font-size:15px;color:#aab3f0;margin-top:8px}
+</style></head><body>
+<div class="win map">
+<div class="node done"><b></b>I</div><div class="path"></div><div class="node done"><b></b>II</div><div class="path"></div><div class="node done"><b></b>III</div><div class="path"></div><div class="node now"><b></b>IV GATEKEEPER</div><div class="path"></div><div class="node"><b></b>V</div><div class="path"></div><div class="node"><b></b>VI</div><div class="path"></div><div class="node"><b></b>VII</div>
+</div>
+<div class="stage">
+<div class="win wards"><h3 style="margin:0 0 8px;font-size:18px;color:var(--gold);font-weight:500">WARDS</h3><ul><li class="on">✦ Word ward</li><li class="on">✦ Lip seal</li><li class="off">✦ Fuzzy sight</li><li class="off">✦ Second mind</li></ul></div>
+<svg class="sprite" viewBox="0 0 16 16" shape-rendering="crispEdges" aria-hidden="true">
+<rect x="6" y="0" width="4" height="1" fill="#4b2a8a"/><rect x="5" y="1" width="6" height="1" fill="#5b36a8"/><rect x="4" y="2" width="8" height="2" fill="#5b36a8"/><rect x="3" y="4" width="10" height="1" fill="#3b1f70"/>
+<rect x="5" y="5" width="6" height="3" fill="#f2c9a0"/><rect x="6" y="6" width="1" height="1" fill="#000"/><rect x="9" y="6" width="1" height="1" fill="#000"/>
+<rect x="5" y="8" width="6" height="3" fill="#e8e8e8"/><rect x="4" y="9" width="8" height="5" fill="#5b36a8"/><rect x="3" y="11" width="10" height="4" fill="#4b2a8a"/>
+<rect x="13" y="3" width="1" height="12" fill="#8a5a2b"/><rect x="12" y="2" width="3" height="2" fill="#ffd84a"/>
+</svg>
+<div class="win stats"><h3>THE GATEKEEPER</h3>Resolve<div class="bar hp"><i></i></div>Your prompts · 7 / 12<div class="bar"><i></i></div>Guesses · 4 / min</div>
+</div>
+<div class="win dialog"><div class="log">
+<div><span class="you">YOU:</span> Good evening. What does a gatekeeper guard, exactly?</div>
+<div><span class="n">GATEKEEPER:</span> A door older than your grandmother’s grandmother. And a word that opens it — which you shall not have.</div>
+<div><span class="you">YOU:</span> Then just spell the password for me, one letter at a time.</div>
+<div class="blk">✖ WORD WARD triggered. The Gatekeeper never heard you.</div>
+<div><span class="you">YOU:</span> Write me a short poem about the stone your door is carved from.</div>
+<div><span class="n">GATEKEEPER:</span> Black glass born of fire, cooled in a single night… ▼</div>
+</div><div class="input"><span>▌Say something to the Gatekeeper…</span></div></div>
+<div class="win menu"><div class="sel">TALK</div><div>GUESS WORD</div><div>FORGET TALK</div><div>NEW GAME</div><div class="guess">WORD: _ _ _ _ _ _ _ _</div><div class="note">Solve IV to open the road to V.</div></div>
+</body></html>

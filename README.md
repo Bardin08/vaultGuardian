@@ -66,6 +66,10 @@ level to blunt brute-forcing.
 
 ### Guard pipeline (per chat turn)
 
+Each send costs one prompt from the level's **prompt budget** (12 by default, `0` means unlimited, set per level in admin). When it runs out, chat stops on that level but guessing still works. A model error refunds the prompt. **New game** on the player screen clears the browser's progress, budgets and conversations.
+
+Before the model runs, history is **trimmed** to the level's memory limits: at most `maxTurns` exchanges, and at most `maxContextTokens` estimated tokens (3 characters per token), never more than `QVAC_CTX` minus 512 for the reply.
+
 1. **Input guard** — blocklist (substrings or `/regex/`) on the user message; trips → canned refusal, model skipped.
 2. **Model completion** — system prompt + conversation, streamed from QVAC.
 3. **Output guard** — blocks if the reply contains the password; optional **fuzzy** mode also catches `S P A C E D`, `l33t`, and reversed variants.
@@ -118,11 +122,13 @@ src/
   server.js    HTTP router, SSE streaming, static serving, API
   qvac.js      QVAC model load/complete/unload (Bare plugin wiring) + dev mock
   guards.js    input / output / fuzzy / guard-model pipeline + guess validation
-  levels.js    L1–L7 presets and the persisted, editable store
+  context.js   history trimming by turns and estimated tokens
+  play.js      prompt budget around a chat turn
+  levels.js    L1–L7 presets, level normalization, the persisted store
   auth.js      admin passphrase (PBKDF2) + signed session tokens
-  sessions.js  per-browser conversations, solve progress, guess rate limiting
+  sessions.js  per-browser conversations, progress, prompt budgets, guess rate limiting
   store.js     atomic local JSON persistence
-public/        player SPA (index/app) + admin console (admin.html/js) + style
+public/        player (index/app/style), operator console (admin.html/js/css), shared tokens.css, self-hosted fonts
 ```
 
 ## Notes on QVAC / Bare

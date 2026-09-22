@@ -1,4 +1,5 @@
 node_modules/
+node_modules
 data/
 .claude/
 .env
@@ -8,3 +9,6 @@ coverage/
 test/.tmp-data/
 *.log
 .DS_Store
+.superpowers/
+.impeccable/review/
+.impeccable/mocks/decision/*.png
