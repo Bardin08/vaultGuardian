@@ -26,3 +26,20 @@ export function cacheControlFor (filePath) {
   if (ext === '.woff2') return `public, max-age=${FONT_MAX_AGE_SECONDS}, immutable`
   return 'no-cache'
 }
+
+// A stale browser cache can hold an old app.js/style.css under an old
+// Cache-Control even after the server starts sending no-cache for them,
+// because a fresh-per-the-old-header entry is reused without a revalidation
+// request. The URL never changes, so nothing invalidates it. Stamping a
+// version query onto same-origin .css/.js references inside the HTML makes
+// the URL itself change on every deploy, so a cached entry can no longer
+// match.
+const ASSET_URL_RE = /((?:href|src)=")(\/(?!\/)[^"?]*\.(?:css|js))(")/g
+
+export function versionAssetUrls (html, versionFor) {
+  return html.replace(ASSET_URL_RE, (match, prefix, url, suffix) => {
+    const version = versionFor(url)
+    if (version === null || version === undefined) return match
+    return `${prefix}${url}?v=${version}${suffix}`
+  })
+}

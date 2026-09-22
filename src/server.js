@@ -14,7 +14,7 @@ import { runTurn, validateGuess, runInputGuard, replyLeaksPassword, runGuardMode
 import { initAuth, needsSetup, setupPassphrase, verifyPassphrase, verifyToken } from './auth.js'
 import { parseCtxSize } from './context.js'
 import { withPrompt } from './play.js'
-import { contentTypeFor, cacheControlFor } from './static.js'
+import { contentTypeFor, cacheControlFor, versionAssetUrls } from './static.js'
 import {
   initSessions, newSessionId, conversation, pushTurn, resetConversation,
   solvedLevels, markSolved, checkGuessLimit, isValidSessionId, promptsLeft, resetGame
@@ -128,6 +128,19 @@ function isUnlocked (sid, levelId) {
   return view ? view.unlocked : false
 }
 
+// Asset mtime, base36, as the cache-busting `?v=` on an .html page's own
+// .css/.js references (see versionAssetUrls in static.js). Null for
+// anything outside public/ or missing, so that reference is left alone.
+function versionForAsset (assetUrlPath) {
+  const assetPath = path.normalize(path.join(PUBLIC, assetUrlPath))
+  if (!assetPath.startsWith(PUBLIC + path.sep)) return null
+  try {
+    return Math.floor(fs.statSync(assetPath).mtimeMs).toString(36)
+  } catch {
+    return null
+  }
+}
+
 function serveStatic (req, res, urlPath) {
   if (req.method !== 'GET' && req.method !== 'HEAD') return send(res, 405, 'method not allowed', { Allow: 'GET, HEAD' })
   let rel = urlPath === '/' ? '/index.html' : urlPath
@@ -136,13 +149,14 @@ function serveStatic (req, res, urlPath) {
   if (!filePath.startsWith(PUBLIC + path.sep)) return send(res, 403, 'forbidden')
   fs.readFile(filePath, (err, data) => {
     if (err) return send(res, 404, 'not found')
+    const headers = { 'Content-Type': contentTypeFor(filePath), 'Cache-Control': cacheControlFor(filePath) }
     // bare-http1 derives Content-Length from the bytes and drops the body
     // itself on HEAD, so HEAD gets the file too. Setting the length here
     // would send it twice, and HEAD with an empty body would announce 0.
-    send(res, 200, data, {
-      'Content-Type': contentTypeFor(filePath),
-      'Cache-Control': cacheControlFor(filePath)
-    })
+    if (path.extname(filePath) === '.html') {
+      return send(res, 200, versionAssetUrls(data.toString('utf8'), versionForAsset), headers)
+    }
+    send(res, 200, data, headers)
   })
 }
 
