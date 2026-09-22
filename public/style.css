@@ -117,14 +117,15 @@ body {
   .seal { grid-area: seal; justify-self: start; min-height: 44px; font-size: 12.5px; padding: 8px 14px; }
   .strip { grid-area: strip; display: grid; grid-template-columns: repeat(auto-fit, minmax(38px, 1fr)); gap: 6px; list-style: none; margin: 0; padding: 0; }
   .strip button { position: relative; width: 100%; height: 44px; border: 0; border-radius: var(--radius); cursor: pointer; font: 14px var(--face-engraved); }
-  .strip button::after { content: ""; position: absolute; top: 8px; width: 5px; height: 28px; }
+  .strip button { padding-bottom: 8px; }
+  .strip button::after { content: ""; position: absolute; bottom: 6px; width: 14px; height: 5px; }
   .strip .is-solved button { background: var(--bronze); color: var(--soot); }
   .strip .is-solved button::after { left: 6px; background: var(--bone); }
   .strip .is-live button { background: var(--ember); color: var(--soot); }
-  .strip .is-live button::after { left: 60%; background: var(--soot); }
+  .strip .is-live button::after { left: calc(50% - 7px); background: var(--soot); }
   .strip .is-open button { background: var(--patina-line); color: var(--bone); }
   .strip .is-locked button { background: var(--patina); color: var(--patina-ink); cursor: not-allowed; }
-  .strip .is-open button::after, .strip .is-locked button::after { right: 8px; border: 1.5px solid var(--patina-ink); }
+  .strip .is-open button::after, .strip .is-locked button::after { right: 6px; border: 1.5px solid var(--patina-ink); }
   .hall { padding: 22px 16px 16px; }
   .hall h1 { font-size: 36px; }
   .log { overflow: visible; margin-top: 18px; }
