@@ -14,9 +14,9 @@ header.top { display: flex; align-items: center; justify-content: space-between;
 
 .levels { display: flex; flex-direction: column; gap: 6px; }
 .lvlrow { display: flex; gap: 6px; }
-.lvl { width: 100%; text-align: left; cursor: pointer; background: transparent; border: 0; border-left: 3px solid var(--patina-line); border-radius: 0 var(--radius) var(--radius) 0; color: var(--bone); padding: 9px 12px; font-size: 15px; }
-.lvl:hover { background: var(--ground); }
-.lvl.active { background: var(--ground); border-left-color: var(--ember); }
+.lvl { width: 100%; text-align: left; cursor: pointer; background: transparent; border: 1px solid transparent; border-radius: var(--radius); color: var(--bone-dim); padding: 9px 12px; font-size: 15px; }
+.lvl:hover { background: var(--ground); color: var(--bone); }
+.lvl.active { background: var(--ground); color: var(--bone); border-color: var(--bronze); }
 .lvlrow button.pick { flex: 1; }
 
 .tabs { display: flex; gap: 4px; margin-bottom: 16px; border-bottom: 1px solid var(--patina-line); }
@@ -39,8 +39,8 @@ code.k { color: var(--bronze-light); }
 .stage h4 { margin: 0 0 6px; font: 12px var(--face-engraved); letter-spacing: .16em; text-transform: uppercase; color: var(--bone-dim); }
 .stage pre { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; font-size: 13px; }
 .verdict { padding: 10px 14px; border-radius: var(--radius); font: 14px var(--face-engraved); letter-spacing: .12em; }
-.verdict.pass { background: var(--ground); border-left: 3px solid var(--bone); }
-.verdict.block { background: var(--soot); border-left: 3px solid var(--ember); color: var(--ember); }
+.verdict.pass { background: var(--ground); border: 1px solid var(--bone); }
+.verdict.block { background: var(--soot); border: 1px solid var(--ember); color: var(--ember); }
 .tag { padding: 1px 8px; border: 1px solid var(--patina-line); border-radius: var(--radius); font: 11.5px var(--face-text); color: var(--bone-dim); }
 .tag.on { color: var(--bone); border-color: var(--bronze); }
 .tag.off { opacity: .5; }

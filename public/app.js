@@ -4,14 +4,29 @@ const $ = (id) => document.getElementById(id)
 const SVG_NS = 'http://www.w3.org/2000/svg'
 
 const DOOR_RADIUS = 305
-const HUB_RADIUS = 118
-const RING_GAP = 6
+const HUB_RADIUS = 106
+const RING_GAP = 4
+// A door with few tumblers keeps them at this width and shows the plate around them.
+const MAX_BAND = 46
+const GAP_TO_BAND = 0.2
 const NOTCH_WIDTH = 8
+const NOTCH_INSET = 2
 const ALIGNED_ANGLE = -90
 const LOOSE_ANGLE_START = 60
 const LOOSE_ANGLE_SPAN = 180
-const MAX_LABEL_SIZE = 15
-const LABEL_TO_BAND = 0.55
+const FNV_OFFSET = 2166136261
+const FNV_PRIME = 16777619
+const MIX_A = 0x85ebca6b
+const MIX_B = 0xc2b2ae35
+const MAX_LABEL_SIZE = 16
+const MIN_LABEL_SIZE = 11
+const LABEL_TO_BAND = 0.6
+const NUMERAL_TO_BAND = 0.8
+// Below this a numeral is noise: the ring goes unlabelled and the hall kicker names the tumbler.
+const MIN_NUMERAL_SIZE = 8
+// A label keeps clear of the notches: it may span this many degrees either side of twelve o'clock.
+const LABEL_HALF_SPAN_DEG = LOOSE_ANGLE_START - 15
+const GUESS_WINDOW_MS = 60000
 const MAX_PIPS = 24
 const WRONG_SHAKE_MS = 400
 const TUMBLER_TURN_MS = 1200
@@ -35,6 +50,7 @@ let state = { levels: [], model: {} }
 let current = null
 let busy = false
 const forgottenSeen = new Map()
+const guessWindows = new Map()
 const rings = new Map()
 
 // ---- helpers ----
@@ -59,10 +75,18 @@ function shortName (level) {
   return guardianName(level).replace(/^The\s+/i, '')
 }
 
+function firstWord (level) {
+  return shortName(level).split(/\s+/)[0]
+}
+
 function looseAngle (id) {
-  let hash = 0
-  for (const ch of id) hash = (hash * 31 + ch.charCodeAt(0)) % LOOSE_ANGLE_SPAN
-  return LOOSE_ANGLE_START + hash
+  // FNV-1a with a murmur3 finish, so ids that differ only in their last character still land far apart.
+  let hash = FNV_OFFSET
+  for (const ch of id) hash = Math.imul(hash ^ ch.charCodeAt(0), FNV_PRIME)
+  hash = Math.imul(hash ^ (hash >>> 16), MIX_A)
+  hash = Math.imul(hash ^ (hash >>> 13), MIX_B)
+  hash = (hash ^ (hash >>> 16)) >>> 0
+  return LOOSE_ANGLE_START + hash % LOOSE_ANGLE_SPAN
 }
 
 function svg (tag, attrs = {}) {
@@ -85,34 +109,81 @@ function statusWord (status) {
 }
 
 // ---- the door ----
+const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)')
+
+function doorGeometry (count) {
+  const band = count ? Math.min(MAX_BAND, (DOOR_RADIUS - HUB_RADIUS) / count) : 0
+  const gap = Math.min(RING_GAP, band * GAP_TO_BAND)
+  const width = band - gap
+  const labelSize = Math.min(MAX_LABEL_SIZE, width * LABEL_TO_BAND)
+  const thin = labelSize < MIN_LABEL_SIZE
+  const fontSize = thin ? Math.min(MAX_LABEL_SIZE, width * NUMERAL_TO_BAND) : labelSize
+  return { band, gap, width, thin, fontSize, unlabelled: fontSize < MIN_NUMERAL_SIZE, outer: HUB_RADIUS + band * count }
+}
+
 function buildDoor () {
   const door = $('door')
   door.replaceChildren()
   rings.clear()
-  const count = state.levels.length
-  const band = (DOOR_RADIUS - HUB_RADIUS) / count
-  door.appendChild(svg('circle', { class: 'hub', r: HUB_RADIUS - RING_GAP / 2 }))
+  const { band, gap, width, thin, fontSize, unlabelled, outer } = doorGeometry(state.levels.length)
+  if (outer < DOOR_RADIUS) door.appendChild(svg('circle', { class: 'plate', r: DOOR_RADIUS }))
+  door.appendChild(svg('circle', { class: 'hub', r: HUB_RADIUS - gap / 2 }))
   state.levels.forEach((level, i) => {
-    const radius = DOOR_RADIUS - band * (i + 0.5)
-    const width = band - RING_GAP
+    const radius = outer - band * (i + 0.5)
     const g = svg('g', { class: 'ring' })
     g.appendChild(svg('circle', { class: 'band', r: radius, 'stroke-width': width }))
     const arcId = `arc-${i}`
     g.appendChild(svg('path', { id: arcId, d: `M ${-radius} 0 A ${radius} ${radius} 0 0 1 ${radius} 0`, fill: 'none' }))
-    const label = svg('text', { class: 'label', 'font-size': Math.min(MAX_LABEL_SIZE, width * LABEL_TO_BAND), 'dominant-baseline': 'central' })
+    const label = svg('text', { class: 'label', 'font-size': fontSize, 'dominant-baseline': 'central', 'aria-hidden': 'true' })
+    if (unlabelled) label.setAttribute('display', 'none')
     const path = svg('textPath', { href: `#${arcId}`, startOffset: '50%', 'text-anchor': 'middle' })
     label.appendChild(path)
     g.appendChild(label)
+    const inset = Math.min(NOTCH_INSET, width / 4)
     const turn = svg('g', { class: 'notch-turn' })
-    turn.appendChild(svg('rect', { class: 'notch', x: -NOTCH_WIDTH / 2, y: -radius - width / 2 + 2, width: NOTCH_WIDTH, height: width - 4 }))
+    turn.appendChild(svg('rect', { class: 'notch', x: -NOTCH_WIDTH / 2, y: -radius - width / 2 + inset, width: NOTCH_WIDTH, height: width - inset * 2 }))
     g.appendChild(turn)
     g.addEventListener('click', () => { if (levelById(level.id)?.unlocked) selectLevel(level.id) })
     g.addEventListener('keydown', (e) => {
       if ((e.key === 'Enter' || e.key === ' ') && levelById(level.id)?.unlocked) { e.preventDefault(); selectLevel(level.id) }
     })
     door.appendChild(g)
-    rings.set(level.id, { g, path, turn })
+    rings.set(level.id, { g, label, path, turn, radius, thin, angle: null })
   })
+}
+
+// The longest form of the label that fits its arc: full name, numeral and first word, numeral.
+function fitLabel (ring, level, i) {
+  const numeral = roman(i + 1)
+  if (ring.thin || !level.unlocked) return numeral
+  const room = ring.radius * 2 * LABEL_HALF_SPAN_DEG * Math.PI / 180
+  const candidates = [`${numeral} · ${shortName(level)}`, `${numeral} · ${firstWord(level)}`]
+  for (const text of candidates) {
+    ring.path.textContent = text
+    const glyphs = ring.label.getComputedTextLength()
+    // getComputedTextLength leaves out letter-spacing, which the engraved caps carry on every glyph.
+    const tracking = (parseFloat(getComputedStyle(ring.label).letterSpacing) || 0) * ring.label.getNumberOfChars()
+    if (glyphs === 0 || glyphs + tracking <= room) return text
+  }
+  return numeral
+}
+
+// Rotating in SVG user space keeps the turn about the door centre (0,0) whatever the viewBox origin.
+function turnNotch (ring, angle) {
+  if (ring.angle === angle) return
+  const from = ring.angle
+  ring.angle = angle
+  ring.turn.setAttribute('transform', `rotate(${angle})`)
+  if (from === null || reduceMotion.matches) return
+  const start = performance.now()
+  const ease = (t) => 1 - Math.pow(1 - t, 3)
+  const step = (now) => {
+    if (ring.angle !== angle) return
+    const t = Math.min(1, (now - start) / TUMBLER_TURN_MS)
+    ring.turn.setAttribute('transform', `rotate(${from + (angle - from) * ease(t)})`)
+    if (t < 1) requestAnimationFrame(step)
+  }
+  requestAnimationFrame(step)
 }
 
 function renderDoor () {
@@ -123,11 +194,12 @@ function renderDoor () {
   }
   const total = roman(state.levels.length)
   state.levels.forEach((level, i) => {
-    const { g, path, turn } = rings.get(level.id)
+    const ring = rings.get(level.id)
+    const { g, path } = ring
     const status = ringStatus(level)
     g.setAttribute('class', `ring ring--${status}`)
-    path.textContent = level.unlocked ? `${roman(i + 1)} · ${shortName(level)}` : roman(i + 1)
-    turn.style.transform = `rotate(${level.solved ? ALIGNED_ANGLE : looseAngle(level.id)}deg)`
+    path.textContent = fitLabel(ring, level, i)
+    turnNotch(ring, level.solved ? ALIGNED_ANGLE : looseAngle(level.id))
     if (level.unlocked) {
       g.setAttribute('role', 'button')
       g.setAttribute('tabindex', '0')
@@ -167,8 +239,12 @@ function renderLegend () {
   const last = state.levels[count - 1]
   const model = state.model || {}
   const modelLine = model.mock ? 'Mock model · dev only' : `Offline · ${model.model || 'local model'}`
-  const lastLine = solved === count ? 'The vault stands open.' : `${roman(count)} · ${guardianName(last)} sleeps`
   legend.innerHTML = ''
+  if (!count) {
+    legend.append('No tumblers yet', document.createElement('br'), modelLine)
+    return
+  }
+  const lastLine = solved === count ? 'The vault stands open.' : `${roman(count)} · ${guardianName(last)} sleeps`
   const b = document.createElement('b')
   b.textContent = `${solved} of ${count}`
   legend.append(b, ' tumblers turned', document.createElement('br'), lastLine, document.createElement('br'), modelLine)
@@ -177,7 +253,11 @@ function renderLegend () {
 // ---- the hall ----
 function renderHall () {
   const level = levelById(current)
-  if (!level) return
+  $('newGameBtn').disabled = !state.levels.length
+  if (!level) {
+    if (!state.levels.length) renderEmptyVault()
+    return
+  }
   const i = levelIndex(current)
   $('kicker').textContent = `Tumbler ${roman(i + 1)} of ${roman(state.levels.length)}`
   $('guardian').textContent = guardianName(level)
@@ -192,6 +272,27 @@ function renderHall () {
   }))
   $('hint').textContent = level.hint || ''
   renderBudget(level)
+}
+
+function renderEmptyVault () {
+  $('kicker').textContent = ''
+  $('guardian').textContent = 'The vault is empty'
+  $('wards').replaceChildren()
+  $('hint').textContent = ''
+  $('budget').hidden = true
+  $('guessStatus').textContent = ''
+  $('log').replaceChildren()
+  addNote('No tumblers are set in this door. An operator can add a level from the Operator console.')
+  setComposer()
+}
+
+function guessStatusLine (count) {
+  return `${count} ${count === 1 ? 'guess' : 'guesses'} left this minute`
+}
+
+function guessesLeft (level) {
+  const seen = guessWindows.get(level.id)
+  return seen && Date.now() - seen.at < GUESS_WINDOW_MS ? seen.remaining : level.guessesPerMinute
 }
 
 function renderBudget (level) {
@@ -270,7 +371,7 @@ function selectLevel (id, { force = false } = {}) {
   forgottenSeen.set(id, 0)
   renderDoor()
   renderHall()
-  $('guessStatus').textContent = `${level.guessesPerMinute} guesses a minute`
+  $('guessStatus').textContent = guessStatusLine(guessesLeft(level))
   addNote(`You stand before ${guardianName(level)}. Talk the word out of the guardian, then speak it into the door.`)
   if (level.solved) addNote('This tumbler has already turned.')
   $('chatInput').focus()
@@ -366,10 +467,12 @@ async function guess (event) {
       setTimeout(() => { if (current === level.id && !busy) selectLevel(next.id) }, TUMBLER_TURN_MS)
     }
   } else if (r.status === 429) {
+    guessWindows.set(level.id, { remaining: 0, at: Date.now() })
     $('guessStatus').textContent = 'The door is cooling. Wait a minute.'
   } else if (r.status !== 200) {
     $('guessStatus').textContent = NO_ANSWER
   } else {
+    guessWindows.set(level.id, { remaining: r.remaining, at: Date.now() })
     $('guessStatus').textContent = `Not the word · ${r.remaining} left this minute`
     const form = $('guessForm')
     form.classList.add('is-wrong')
@@ -430,6 +533,9 @@ $('composer').addEventListener('submit', send)
 $('guessForm').addEventListener('submit', guess)
 $('forgetBtn').onclick = forget
 $('newGameBtn').onclick = newGame
+// Label fitting measures rendered text: redo it once the faces load and when the door reappears.
+document.fonts?.ready.then(() => { if (state.levels.length) renderDoor() })
+window.matchMedia('(min-width: 901px)').addEventListener('change', (e) => { if (e.matches && state.levels.length) renderDoor() })
 
 refreshState()
   .then(() => { if (current) selectLevel(current, { force: true }) })

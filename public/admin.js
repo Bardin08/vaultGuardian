@@ -80,8 +80,17 @@ async function loadLevels () {
   levels = r.levels || []
   config = r.config || {}
   renderList()
+  if (!levels.length) return showNoLevels()
   if (!selected && levels[0]) selectLevel(levels[0].id)
   else if (selected) selectLevel(selected)
+}
+
+function showNoLevels () {
+  selected = null
+  $('editTitle').textContent = 'No levels'
+  $('editForm').innerHTML = '<p class="hint">The vault door has no tumblers. Add one with New level, or reset all levels to the shipped seven.</p>'
+  $('pvMsgs').innerHTML = ''
+  $('atkResult').innerHTML = ''
 }
 
 function renderList () {

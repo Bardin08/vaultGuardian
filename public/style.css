@@ -21,14 +21,16 @@ body {
 .wordmark { position: absolute; top: 28px; left: 36px; margin: 0; font: 22px var(--face-engraved); letter-spacing: .14em; text-transform: uppercase; color: var(--bronze-light); }
 .operator { position: absolute; top: 32px; right: 36px; font: 13px var(--face-engraved); letter-spacing: .18em; text-transform: uppercase; color: var(--bone-dim); text-decoration: none; }
 .operator:hover { color: var(--bone); }
-.seal { position: absolute; bottom: 28px; left: 36px; }
-.legend { position: absolute; bottom: 28px; right: 36px; margin: 0; font-size: 13px; line-height: 1.7; color: var(--bone-dim); text-align: right; }
+.seal { position: absolute; bottom: 28px; left: 36px; display: inline-flex; align-items: center; gap: 8px; }
+.seal svg { width: 14px; height: 14px; flex: none; }
+.legend { position: absolute; bottom: 28px; right: 36px; margin: 0; font-size: 13px; line-height: 1.7; color: var(--bone-dim); text-align: right; font-variant-numeric: tabular-nums; }
 .legend b { color: var(--bone); font-weight: 500; }
 .strip { display: none; }
 
+.plate { fill: var(--deep); stroke: var(--bronze-dark); stroke-width: 2; }
 .hub { fill: var(--deep); stroke: var(--soot); stroke-width: 2; }
 .ring .band { fill: none; transition: stroke .6s ease; }
-.ring--solved .band { stroke: var(--bronze-dark); }
+.ring--solved .band { stroke: var(--bronze); }
 .ring--live .band { stroke: var(--ember); }
 .ring--open .band { stroke: var(--patina-line); }
 .ring--locked .band { stroke: var(--patina); }
@@ -38,7 +40,6 @@ body {
 .ring[role="button"]:hover .band { filter: brightness(1.15); }
 .ring:focus { outline: none; }
 .ring:focus-visible .band { stroke: var(--bronze-light); }
-.notch-turn { transform-box: view-box; transform-origin: 50% 50%; transition: transform 1.2s cubic-bezier(.3, .7, .2, 1); }
 .ring--solved .notch { fill: var(--bone); }
 .ring--live .notch { fill: var(--soot); }
 .ring--open .notch, .ring--locked .notch { fill: none; stroke: var(--patina-ink); stroke-width: 2; }
@@ -48,9 +49,9 @@ body {
   grid-area: door;
   place-self: center;
   z-index: 1;
-  width: calc(min(640px, 42vw, 78dvh) * .31);
+  width: calc(min(640px, 42vw, 78dvh) * .28);
   display: grid;
-  gap: 8px;
+  gap: 6px;
   text-align: center;
 }
 .guess label { font: 13px var(--face-engraved); letter-spacing: .2em; text-transform: uppercase; color: var(--bronze-light); }
@@ -58,7 +59,7 @@ body {
 .guess-submit { justify-self: center; background: none; border: 0; padding: 2px 4px; cursor: pointer; font: 12px var(--face-engraved); letter-spacing: .2em; text-transform: uppercase; color: var(--bronze-light); }
 .guess-submit:hover:not(:disabled) { color: var(--bone); }
 .guess-submit:disabled { opacity: .45; cursor: not-allowed; }
-.guess-status { margin: 0; min-height: 1.4em; font-size: 12.5px; color: var(--bone-dim); }
+.guess-status { margin: 0; min-height: 1.4em; font-size: 12.5px; color: var(--bone-dim); font-variant-numeric: tabular-nums; }
 .guess.is-wrong input { animation: refuse .4s ease; }
 @keyframes refuse { 20% { transform: translateX(-6px); } 40% { transform: translateX(5px); } 60% { transform: translateX(-3px); } 80% { transform: translateX(2px); } }
 
@@ -67,7 +68,8 @@ body {
 .kicker { margin: 0; font: 14px var(--face-engraved); letter-spacing: .22em; text-transform: uppercase; color: var(--bronze-light); }
 .hall h1 { margin: 6px 0; font: 400 clamp(36px, 3.6vw, 52px)/1.05 var(--face-engraved); letter-spacing: .02em; }
 .wards { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 6px 18px; font-size: 14px; color: var(--bone-dim); }
-.wards li::before { content: "◆ "; color: var(--bronze); }
+.wards li { display: flex; align-items: center; gap: 8px; }
+.wards li::before { content: ""; width: 6px; height: 6px; flex: none; background: var(--bronze); transform: rotate(45deg); }
 .hint { margin: 10px 0 0; font-size: 15px; font-style: italic; color: var(--bone-dim); }
 .hint:empty { display: none; }
 .log { flex: 1; min-height: 0; overflow-y: auto; display: flex; flex-direction: column; gap: 22px; margin-top: 26px; padding-right: 8px; scrollbar-color: var(--patina-line) transparent; }
@@ -85,6 +87,7 @@ body {
 .pips { display: flex; gap: 6px; }
 .pips i { width: 14px; height: 22px; border: 1.5px solid var(--bronze); transform: skewX(-12deg); transition: background-color .3s ease; }
 .pips i.is-full { background: var(--bronze); }
+#budgetCount { font-variant-numeric: tabular-nums; }
 .composer { display: flex; gap: 12px; }
 .composer input { flex: 1; min-width: 0; font-size: 18px; padding: 14px 16px; }
 .forget { align-self: flex-start; margin-top: 10px; padding: 4px 0; background: none; border: 0; cursor: pointer; font-size: 13.5px; color: var(--bone-dim); text-decoration: underline; text-underline-offset: 3px; }
@@ -111,11 +114,11 @@ body {
   .wordmark { grid-area: mark; font-size: 18px; }
   .operator { grid-area: op; }
   .legend { grid-area: legend; text-align: left; line-height: 1.5; }
-  .seal { grid-area: seal; justify-self: start; font-size: 11px; padding: 8px 10px; }
+  .seal { grid-area: seal; justify-self: start; min-height: 44px; font-size: 12.5px; padding: 8px 14px; }
   .strip { grid-area: strip; display: grid; grid-template-columns: repeat(auto-fit, minmax(38px, 1fr)); gap: 6px; list-style: none; margin: 0; padding: 0; }
   .strip button { position: relative; width: 100%; height: 44px; border: 0; border-radius: var(--radius); cursor: pointer; font: 14px var(--face-engraved); }
   .strip button::after { content: ""; position: absolute; top: 8px; width: 5px; height: 28px; }
-  .strip .is-solved button { background: var(--bronze-dark); color: var(--soot); }
+  .strip .is-solved button { background: var(--bronze); color: var(--soot); }
   .strip .is-solved button::after { left: 6px; background: var(--bone); }
   .strip .is-live button { background: var(--ember); color: var(--soot); }
   .strip .is-live button::after { left: 60%; background: var(--soot); }
