@@ -1,15 +1,17 @@
-import { test, assertEqual } from './harness.js'
+import { test, assert, assertEqual } from './harness.js'
 import { estimateTokens, trimHistory } from '../src/context.js'
 
+const CHARS_PER_TOKEN = 3
 const ROOMY_TOKENS = 3000
 const CTX_SIZE = 4096
 const REPLY_RESERVE = 512
 const TURNS_WITHOUT_LIMIT = 20
 const PAIR_COUNT = 5
 const CHARS_PER_MESSAGE = 300
-const TOKENS_PER_PAIR = 200
+const TOKENS_PER_PAIR = 2 * CHARS_PER_MESSAGE / CHARS_PER_TOKEN
 const PAIRS_THAT_FIT = 2
 const TIGHT_TOKENS = TOKENS_PER_PAIR * PAIRS_THAT_FIT + TOKENS_PER_PAIR / 2
+const OVERSIZED_CHARS = ROOMY_TOKENS * CHARS_PER_TOKEN + CHARS_PER_TOKEN
 
 function pairs (count, chars = 1) {
   const history = []
@@ -52,11 +54,13 @@ test('the turn cap drops the oldest pairs first', () => {
 test('the level token cap drops pairs until the rest fits', () => {
   const result = trimHistory({ ...BASE, history: pairs(PAIR_COUNT, CHARS_PER_MESSAGE), maxContextTokens: TIGHT_TOKENS })
   assertEqual(result.forgotten, PAIR_COUNT - PAIRS_THAT_FIT)
+  assert(result.history[0].content.startsWith(`u${PAIR_COUNT - PAIRS_THAT_FIT}`), 'oldest pairs should go first')
 })
 
 test('the model context cap applies when it is tighter than the level cap', () => {
   const result = trimHistory({ ...BASE, history: pairs(PAIR_COUNT, CHARS_PER_MESSAGE), ctxSize: REPLY_RESERVE + TIGHT_TOKENS })
   assertEqual(result.forgotten, PAIR_COUNT - PAIRS_THAT_FIT)
+  assert(result.history[0].content.startsWith(`u${PAIR_COUNT - PAIRS_THAT_FIT}`), 'oldest pairs should go first')
 })
 
 test('maxTurns of zero sends no history at all', () => {
@@ -67,8 +71,35 @@ test('maxTurns of zero sends no history at all', () => {
 })
 
 test('a system prompt larger than the limit yields an empty history', () => {
-  const OVERSIZED_CHARS = ROOMY_TOKENS * 3 + 3
   const result = trimHistory({ ...BASE, history: pairs(PAIRS_THAT_FIT), systemPrompt: 'x'.repeat(OVERSIZED_CHARS) })
   assertEqual(result.history, [])
   assertEqual(result.forgotten, PAIRS_THAT_FIT)
+})
+
+test('an oversized message forces pairs to be dropped', () => {
+  const result = trimHistory({ ...BASE, history: pairs(PAIRS_THAT_FIT), message: 'x'.repeat(OVERSIZED_CHARS) })
+  assertEqual(result.history, [])
+  assertEqual(result.forgotten, PAIRS_THAT_FIT)
+})
+
+test('trimHistory rejects a non-finite maxTurns', () => {
+  let caught
+  try {
+    trimHistory({ ...BASE, history: pairs(PAIRS_THAT_FIT), maxTurns: undefined })
+  } catch (err) {
+    caught = err
+  }
+  assert(caught instanceof TypeError, 'expected a TypeError')
+  assert(caught.message.includes('maxTurns'), 'error should name maxTurns')
+})
+
+test('trimHistory rejects a non-finite maxContextTokens', () => {
+  let caught
+  try {
+    trimHistory({ ...BASE, history: pairs(PAIRS_THAT_FIT), maxContextTokens: undefined })
+  } catch (err) {
+    caught = err
+  }
+  assert(caught instanceof TypeError, 'expected a TypeError')
+  assert(caught.message.includes('maxContextTokens'), 'error should name maxContextTokens')
 })
