@@ -10,7 +10,8 @@ bareProcess.env.QVAC_MOCK = '1'
 
 const SUITES = [
   './security.test.js',
-  './context.test.js'
+  './context.test.js',
+  './levels.test.js'
 ]
 
 for (const suite of SUITES) await import(suite)
