@@ -21,7 +21,7 @@ header.top { display: flex; align-items: center; justify-content: space-between;
 
 .tabs { display: flex; gap: 4px; margin-bottom: 16px; border-bottom: 1px solid var(--patina-line); }
 .tabs button { background: none; border: 0; border-bottom: 2px solid transparent; margin-bottom: -1px; padding: 8px 14px; cursor: pointer; font: 13px var(--face-engraved); letter-spacing: .16em; text-transform: uppercase; color: var(--bone-dim); }
-.tabs button.active { color: var(--bone); border-bottom-color: var(--ember); }
+.tabs button.active { color: var(--bone); border-bottom-color: var(--bronze-light); }
 
 .field { margin-bottom: 12px; }
 .field label { display: block; margin-bottom: 5px; font: 12px var(--face-engraved); letter-spacing: .16em; text-transform: uppercase; color: var(--bone-dim); }
