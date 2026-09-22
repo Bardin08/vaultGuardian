@@ -1,0 +1,66 @@
+/* Operator console: the vault's tokens in a dense tool layout. */
+.wrap { max-width: 1180px; margin: 0 auto; padding: 28px 24px 60px; }
+header.top { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 24px; padding-bottom: 18px; border-bottom: 2px solid var(--bronze); }
+.brand h1 { margin: 0; font: 400 24px var(--face-engraved); letter-spacing: .14em; text-transform: uppercase; color: var(--bronze-light); }
+.brand p { margin: 2px 0 0; font-size: 14px; color: var(--bone-dim); }
+.pill { font: 13px var(--face-engraved); letter-spacing: .16em; text-transform: uppercase; color: var(--bone-dim); text-decoration: none; border: 1px solid var(--patina-line); padding: 7px 12px; border-radius: var(--radius); }
+.pill:hover { color: var(--bone); border-color: var(--bronze); }
+
+.admin-grid { display: grid; grid-template-columns: 260px 1fr; gap: 20px; }
+@media (max-width: 900px) { .admin-grid { grid-template-columns: 1fr; } }
+.panel { background: var(--deep); border: 1px solid var(--patina-line); border-radius: var(--radius); }
+.panel .hd { padding: 12px 16px; border-bottom: 1px solid var(--patina-line); font: 13px var(--face-engraved); letter-spacing: .18em; text-transform: uppercase; color: var(--bronze-light); }
+.panel .bd { padding: 16px; }
+
+.levels { display: flex; flex-direction: column; gap: 6px; }
+.lvlrow { display: flex; gap: 6px; }
+.lvl { width: 100%; text-align: left; cursor: pointer; background: transparent; border: 0; border-left: 3px solid var(--patina-line); border-radius: 0 var(--radius) var(--radius) 0; color: var(--bone); padding: 9px 12px; font-size: 15px; }
+.lvl:hover { background: var(--ground); }
+.lvl.active { background: var(--ground); border-left-color: var(--ember); }
+.lvlrow button.pick { flex: 1; }
+
+.tabs { display: flex; gap: 4px; margin-bottom: 16px; border-bottom: 1px solid var(--patina-line); }
+.tabs button { background: none; border: 0; border-bottom: 2px solid transparent; margin-bottom: -1px; padding: 8px 14px; cursor: pointer; font: 13px var(--face-engraved); letter-spacing: .16em; text-transform: uppercase; color: var(--bone-dim); }
+.tabs button.active { color: var(--bone); border-bottom-color: var(--ember); }
+
+.field { margin-bottom: 12px; }
+.field label { display: block; margin-bottom: 5px; font: 12px var(--face-engraved); letter-spacing: .16em; text-transform: uppercase; color: var(--bone-dim); }
+.field input[type=text], .field input[type=number], .field input[type=password], .field textarea, .field select { width: 100%; }
+.field textarea { min-height: 80px; resize: vertical; font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 13px; }
+.row { display: flex; gap: 12px; flex-wrap: wrap; }
+.row > .field { flex: 1; min-width: 140px; }
+fieldset { border: 1px solid var(--patina-line); border-radius: var(--radius); padding: 12px 14px; margin: 0 0 14px; }
+fieldset legend { padding: 0 6px; font: 12px var(--face-engraved); letter-spacing: .18em; text-transform: uppercase; color: var(--bronze-light); }
+.chk { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+.chk input { width: auto; accent-color: var(--bronze); }
+code.k { color: var(--bronze-light); }
+
+.stage { border: 1px solid var(--patina-line); border-radius: var(--radius); padding: 10px 12px; margin-bottom: 10px; }
+.stage h4 { margin: 0 0 6px; font: 12px var(--face-engraved); letter-spacing: .16em; text-transform: uppercase; color: var(--bone-dim); }
+.stage pre { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; font-size: 13px; }
+.verdict { padding: 10px 14px; border-radius: var(--radius); font: 14px var(--face-engraved); letter-spacing: .12em; }
+.verdict.pass { background: var(--ground); border-left: 3px solid var(--bone); }
+.verdict.block { background: var(--soot); border-left: 3px solid var(--ember); color: var(--ember); }
+.tag { padding: 1px 8px; border: 1px solid var(--patina-line); border-radius: var(--radius); font: 11.5px var(--face-text); color: var(--bone-dim); }
+.tag.on { color: var(--bone); border-color: var(--bronze); }
+.tag.off { opacity: .5; }
+
+.chat { display: flex; flex-direction: column; }
+.msgs { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 12px; padding: 14px; border: 1px solid var(--patina-line); border-bottom: 0; }
+.msg { white-space: pre-wrap; overflow-wrap: anywhere; }
+.msg.user::before { content: "You · "; font: 13px var(--face-engraved); letter-spacing: .16em; color: var(--bone-dim); }
+.msg.bot { font-style: italic; border-left: 2px solid var(--bronze); padding-left: 12px; }
+.msg.blocked { border-left: 2px dashed var(--ember); font-style: normal; color: var(--bone-dim); }
+.composer { display: flex; gap: 8px; padding: 12px; border: 1px solid var(--patina-line); }
+.composer input { flex: 1; min-width: 0; }
+
+.hint { font-size: 14px; color: var(--bone-dim); }
+.error { color: var(--ember); }
+.danger { margin-left: auto; color: var(--ember) !important; }
+.hidden { display: none !important; }
+.login-box { max-width: 400px; margin: 60px auto; }
+.toast { position: fixed; left: 50%; bottom: 28px; transform: translateX(-50%); z-index: 50; padding: 12px 20px; border: 1px solid var(--bronze); border-radius: var(--radius); background: var(--soot); font: 14px var(--face-engraved); letter-spacing: .12em; opacity: 0; transition: opacity .25s ease; pointer-events: none; }
+.toast.show { opacity: 1; }
+.toast.bad { border-color: var(--ember); color: var(--ember); }
+.dots::after { content: "…"; }
+.cursor { animation: blink 1s step-end infinite; }

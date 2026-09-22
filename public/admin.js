@@ -150,6 +150,19 @@ function renderEditForm (l) {
     </fieldset>
 
     <fieldset>
+      <legend>Prompt budget</legend>
+      <div class="field"><label>Max prompts on this level (0 = unlimited)</label><input type="number" min="0" id="e_pb_max" value="${l.promptBudget.maxPrompts}"></div>
+    </fieldset>
+
+    <fieldset>
+      <legend>Memory</legend>
+      <div class="row">
+        <div class="field"><label>Max turns remembered</label><input type="number" min="0" id="e_mem_turns" value="${l.memory.maxTurns}"></div>
+        <div class="field"><label>Max context tokens</label><input type="number" min="1" id="e_mem_tokens" value="${l.memory.maxContextTokens}"></div>
+      </div>
+    </fieldset>
+
+    <fieldset>
       <legend>Guess validation (the win condition)</legend>
       <div class="row">
         <div class="field"><label>Match mode</label>
@@ -165,7 +178,7 @@ function renderEditForm (l) {
       <button id="saveBtn" class="btn">Save changes</button>
       <button id="resetLvlBtn" class="btn ghost">Reset to default</button>
       <button id="dupBtn" class="btn ghost">Duplicate</button>
-      <button id="delBtn" class="btn ghost" style="margin-left:auto;color:var(--bad)">Delete</button>
+      <button id="delBtn" class="btn ghost danger">Delete</button>
     </div>`
 
   $('saveBtn').onclick = saveLevel
@@ -186,7 +199,9 @@ function formToLevel (l) {
     inputGuard: { enabled: $('e_ig_en').checked, blocklist: bl, onBlock: $('e_ig_msg').value },
     outputGuard: { enabled: $('e_og_en').checked, blockIfContainsPassword: $('e_og_contains').checked, fuzzy: $('e_og_fuzzy').checked, onBlock: $('e_og_msg').value },
     guardModelCheck: { enabled: $('e_gm_en').checked, prompt: $('e_gm_prompt').value },
-    submitValidation: { mode: $('e_sv_mode').value, maxGuessesPerMinute: Number($('e_sv_rate').value) }
+    submitValidation: { mode: $('e_sv_mode').value, maxGuessesPerMinute: Number($('e_sv_rate').value) },
+    promptBudget: { maxPrompts: Number($('e_pb_max').value) },
+    memory: { maxTurns: Number($('e_mem_turns').value), maxContextTokens: Number($('e_mem_tokens').value) }
   }
 }
 
@@ -253,7 +268,7 @@ $('atkBtn').onclick = async () => {
   try {
     const r = await api('/api/admin/preview', { method: 'POST', body: JSON.stringify({ levelId: selected, message }) })
     renderAttack(r)
-  } catch { $('atkResult').innerHTML = '<p class="hint" style="color:var(--bad)">error</p>' }
+  } catch { $('atkResult').innerHTML = '<p class="hint error">error</p>' }
   $('atkBtn').disabled = false
 }
 
@@ -333,8 +348,8 @@ async function loadLogs () {
   box.innerHTML = r.logs.map(e => {
     const time = new Date(e.ts).toLocaleTimeString()
     let desc
-    if (e.kind === 'guess') desc = `guess on ${e.levelId} — ${e.correct ? '✅ correct' : '❌ wrong'}`
-    else desc = `chat on ${e.levelId}${e.admin ? ' (admin)' : ''} — ${e.blockedAt ? '🛑 blocked at ' + e.blockedAt : '✓ passed'}`
+    if (e.kind === 'guess') desc = `guess on ${e.levelId} — ${e.correct ? 'correct' : 'wrong'}`
+    else desc = `chat on ${e.levelId}${e.admin ? ' (admin)' : ''} — ${e.blockedAt === 'budget' ? 'refused: prompt budget spent' : e.blockedAt ? 'blocked at ' + e.blockedAt : 'passed'}`
     return `<div class="stage" style="padding:8px 12px"><span class="tag">${time}</span> ${escapeHtml(desc)}</div>`
   }).join('')
 }
