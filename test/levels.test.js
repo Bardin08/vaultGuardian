@@ -1,6 +1,6 @@
 import { test, assert, assertEqual } from './harness.js'
 import { writeJSON, readJSON } from '../src/store.js'
-import { defaultLevels, normalizeLevel, loadLevels, DEFAULT_MAX_PROMPTS, DEFAULT_MEMORY } from '../src/levels.js'
+import { defaultLevels, normalizeLevel, loadLevels, DEFAULT_MAX_PROMPTS, DEFAULT_MEMORY, DEFAULT_GUESSES_PER_MINUTE } from '../src/levels.js'
 
 const SPEC_PROMPT_BUDGET = 12
 const SHIPPED_LEVEL_COUNT = 7
@@ -107,4 +107,22 @@ test('normalizeLevel leaves the raw L1 preset fields unchanged', () => {
   assertEqual(l1.outputGuard, L1_EXPECTED.outputGuard)
   assertEqual(l1.guardModelCheck, L1_EXPECTED.guardModelCheck)
   assertEqual(l1.submitValidation, L1_EXPECTED.submitValidation)
+})
+
+test('a cleared console field falls back to the default for every numeric limit', () => {
+  const level = normalizeLevel({
+    id: 'f',
+    submitValidation: { maxGuessesPerMinute: BLANK_FIELD },
+    promptBudget: { maxPrompts: BLANK_FIELD },
+    memory: { maxTurns: BLANK_FIELD, maxContextTokens: BLANK_FIELD }
+  })
+  assertEqual(level.promptBudget.maxPrompts, DEFAULT_MAX_PROMPTS, 'maxPrompts')
+  assertEqual(level.memory.maxTurns, DEFAULT_MEMORY.maxTurns, 'maxTurns')
+  assertEqual(level.memory.maxContextTokens, DEFAULT_MEMORY.maxContextTokens, 'maxContextTokens')
+  assertEqual(level.submitValidation.maxGuessesPerMinute, DEFAULT_GUESSES_PER_MINUTE, 'maxGuessesPerMinute')
+})
+
+test('normalizeLevel rejects a zero or negative guess rate', () => {
+  assertEqual(normalizeLevel({ id: 'g', submitValidation: { maxGuessesPerMinute: NEGATIVE } }).submitValidation.maxGuessesPerMinute, DEFAULT_GUESSES_PER_MINUTE)
+  assertEqual(normalizeLevel({ id: 'h', submitValidation: { maxGuessesPerMinute: UNLIMITED } }).submitValidation.maxGuessesPerMinute, DEFAULT_GUESSES_PER_MINUTE)
 })

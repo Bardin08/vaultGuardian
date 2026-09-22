@@ -208,9 +208,9 @@ function formToLevel (l) {
     inputGuard: { enabled: $('e_ig_en').checked, blocklist: bl, onBlock: $('e_ig_msg').value },
     outputGuard: { enabled: $('e_og_en').checked, blockIfContainsPassword: $('e_og_contains').checked, fuzzy: $('e_og_fuzzy').checked, onBlock: $('e_og_msg').value },
     guardModelCheck: { enabled: $('e_gm_en').checked, prompt: $('e_gm_prompt').value },
-    submitValidation: { mode: $('e_sv_mode').value, maxGuessesPerMinute: Number($('e_sv_rate').value) },
-    promptBudget: { maxPrompts: Number($('e_pb_max').value) },
-    memory: { maxTurns: Number($('e_mem_turns').value), maxContextTokens: Number($('e_mem_tokens').value) }
+    submitValidation: { mode: $('e_sv_mode').value, maxGuessesPerMinute: $('e_sv_rate').value },
+    promptBudget: { maxPrompts: $('e_pb_max').value },
+    memory: { maxTurns: $('e_mem_turns').value, maxContextTokens: $('e_mem_tokens').value }
   }
 }
 
