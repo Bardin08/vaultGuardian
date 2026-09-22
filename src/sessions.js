@@ -107,21 +107,31 @@ export function promptsLeft (sid, level) {
   return Math.max(0, max - used)
 }
 
+// Changes a prompt count and persists it; if the save fails the count goes
+// back to what it was, so memory never disagrees with what is on disk.
+function adjustPromptsUsed (record, levelId, delta) {
+  const before = record.promptsUsed[levelId] || 0
+  record.promptsUsed[levelId] = before + delta
+  try {
+    saveProgress()
+  } catch (err) {
+    record.promptsUsed[levelId] = before
+    throw err
+  }
+}
+
 export function spendPrompt (sid, level) {
   const left = promptsLeft(sid, level)
   if (left === null) return true
   if (left === 0) return false
-  const record = progressOf(sid)
-  record.promptsUsed[level.id] = (record.promptsUsed[level.id] || 0) + 1
-  saveProgress()
+  adjustPromptsUsed(progressOf(sid), level.id, 1)
   return true
 }
 
 export function refundPrompt (sid, level) {
   const record = progress.get(sid)
   if (!record || !record.promptsUsed[level.id]) return
-  record.promptsUsed[level.id]--
-  saveProgress()
+  adjustPromptsUsed(record, level.id, -1)
 }
 
 // New game: forget solves, budgets, conversations and guess windows.

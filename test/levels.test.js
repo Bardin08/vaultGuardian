@@ -1,5 +1,5 @@
 import { test, assert, assertEqual } from './harness.js'
-import { writeJSON } from '../src/store.js'
+import { writeJSON, readJSON } from '../src/store.js'
 import { defaultLevels, normalizeLevel, loadLevels, DEFAULT_MAX_PROMPTS, DEFAULT_MEMORY } from '../src/levels.js'
 
 const SPEC_PROMPT_BUDGET = 12
@@ -87,8 +87,14 @@ test('loadLevels skips null and non-object entries in the saved file', () => {
   assertEqual(loaded, [l1])
 })
 
-test('loadLevels survives a saved file holding only null', () => {
+test('loadLevels falls back to defaults when no saved entry is usable', () => {
   writeJSON('levels.json', [null])
+  assertEqual(loadLevels(), defaultLevels())
+  assertEqual(readJSON('levels.json', null), defaultLevels())
+})
+
+test('loadLevels keeps an empty saved array empty', () => {
+  writeJSON('levels.json', [])
   assertEqual(loadLevels(), [])
 })
 

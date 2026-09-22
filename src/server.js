@@ -158,7 +158,10 @@ function serveStatic (req, res, urlPath) {
   if (!filePath.startsWith(PUBLIC + path.sep)) return send(res, 403, 'forbidden')
   fs.readFile(filePath, (err, data) => {
     if (err) return send(res, 404, 'not found')
-    send(res, 200, req.method === 'HEAD' ? '' : data, {
+    // bare-http1 derives Content-Length from the bytes and drops the body
+    // itself on HEAD, so HEAD gets the file too. Setting the length here
+    // would send it twice, and HEAD with an empty body would announce 0.
+    send(res, 200, data, {
       'Content-Type': MIME[path.extname(filePath)] || 'application/octet-stream',
       'Cache-Control': filePath.endsWith('.html') ? 'no-store' : 'public, max-age=3600'
     })
@@ -336,6 +339,7 @@ async function chat (req, res, sid, body, admin) {
     addLog({ kind: 'chat', levelId, admin, blockedAt: result.blockedAt })
   } catch (err) {
     console.error('[chat] error:', err)
+    if (!res.headersSent) return json(res, 500, { error: 'model error' })
     write('error', { error: 'model error' })
   }
   res.end()

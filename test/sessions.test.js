@@ -1,5 +1,7 @@
 import { test, assert, assertEqual } from './harness.js'
-import { writeJSON, readJSON } from '../src/store.js'
+import fs from 'bare-fs'
+import path from 'bare-path'
+import { writeJSON, readJSON, dataDir } from '../src/store.js'
 import {
   initSessions, newSessionId, solvedLevels, markSolved, promptsLeft, spendPrompt,
   refundPrompt, resetGame, pushTurn, conversation, checkGuessLimit
@@ -13,6 +15,30 @@ const ONE_GUESS_PER_MINUTE = 1
 const NO_GUESSES_LEFT = 0
 const RATE_LIMITED = -1
 const MESSAGES_PER_EXCHANGE = 2
+const USED_ON_LOAD = 2
+const PROGRESS_FILE = 'progress.json'
+
+// A directory where progress.json should be makes the rename in writeJSON fail.
+function withUnwritableProgress (fn) {
+  const file = path.join(dataDir(), PROGRESS_FILE)
+  fs.rmSync(file, { force: true })
+  fs.mkdirSync(file)
+  try {
+    return fn()
+  } finally {
+    fs.rmSync(file, { recursive: true, force: true })
+    fs.rmSync(file + '.tmp', { force: true })
+  }
+}
+
+function throws (fn) {
+  try {
+    fn()
+  } catch {
+    return true
+  }
+  return false
+}
 
 test('legacy progress arrays load as solved levels, and forged keys are dropped', () => {
   const sid = newSessionId()
@@ -26,12 +52,12 @@ test('legacy progress arrays load as solved levels, and forged keys are dropped'
 
 test('loaded progress rejects a non-array solved value and non-integer or negative prompt counts', () => {
   const sid = newSessionId()
-  writeJSON('progress.json', { [sid]: { solved: 'l1', promptsUsed: { l1: '9', l2: -1, l3: 2 } } })
+  writeJSON('progress.json', { [sid]: { solved: 'l1', promptsUsed: { l1: '9', l2: -1, l3: USED_ON_LOAD } } })
   initSessions()
   assertEqual(solvedLevels(sid).size, 0)
   assertEqual(promptsLeft(sid, { id: 'l1', promptBudget: { maxPrompts: BUDGET } }), BUDGET)
   assertEqual(promptsLeft(sid, { id: 'l2', promptBudget: { maxPrompts: BUDGET } }), BUDGET)
-  assertEqual(promptsLeft(sid, { id: 'l3', promptBudget: { maxPrompts: BUDGET } }), BUDGET - 2)
+  assertEqual(promptsLeft(sid, { id: 'l3', promptBudget: { maxPrompts: BUDGET } }), BUDGET - USED_ON_LOAD)
 })
 
 test('spending counts down and refuses at zero', () => {
@@ -80,4 +106,19 @@ test('resetGame clears only that session', () => {
   assertEqual(promptsLeft(other, LIMITED), BUDGET - 1)
   assertEqual(conversation(other, 'l1').length, MESSAGES_PER_EXCHANGE)
   assertEqual(checkGuessLimit(other, 'l1', ONE_GUESS_PER_MINUTE), RATE_LIMITED)
+})
+
+test('a spend that cannot be saved is rolled back and rethrown', () => {
+  const sid = newSessionId()
+  const threw = withUnwritableProgress(() => throws(() => spendPrompt(sid, LIMITED)))
+  assert(threw, 'a failed save should surface')
+  assertEqual(promptsLeft(sid, LIMITED), BUDGET)
+})
+
+test('a refund that cannot be saved is rolled back and rethrown', () => {
+  const sid = newSessionId()
+  spendPrompt(sid, LIMITED)
+  const threw = withUnwritableProgress(() => throws(() => refundPrompt(sid, LIMITED)))
+  assert(threw, 'a failed save should surface')
+  assertEqual(promptsLeft(sid, LIMITED), BUDGET - 1)
 })

@@ -155,15 +155,26 @@ export function defaultLevels () {
 
 const LEVELS_FILE = 'levels.json'
 
+function restoreDefaults () {
+  const levels = defaultLevels()
+  writeJSON(LEVELS_FILE, levels)
+  return levels
+}
+
 export function loadLevels () {
   const saved = readJSON(LEVELS_FILE, null)
   if (!Array.isArray(saved)) {
     if (saved !== null) console.warn(`[levels] ${LEVELS_FILE} is not an array; replacing it with the shipped levels`)
-    const levels = defaultLevels()
-    writeJSON(LEVELS_FILE, levels)
-    return levels
+    return restoreDefaults()
   }
-  return saved.filter(l => l !== null && typeof l === 'object' && !Array.isArray(l)).map(normalizeLevel)
+  const usable = saved.filter(l => l !== null && typeof l === 'object' && !Array.isArray(l))
+  const skipped = saved.length - usable.length
+  if (skipped > 0) console.warn(`[levels] skipped ${skipped} broken ${skipped === 1 ? 'entry' : 'entries'} in ${LEVELS_FILE}`)
+  if (saved.length > 0 && usable.length === 0) {
+    console.warn(`[levels] no usable level left in ${LEVELS_FILE}; replacing it with the shipped levels`)
+    return restoreDefaults()
+  }
+  return usable.map(normalizeLevel)
 }
 
 export function saveLevels (levels) {
