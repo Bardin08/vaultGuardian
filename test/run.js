@@ -13,7 +13,8 @@ const SUITES = [
   './context.test.js',
   './levels.test.js',
   './sessions.test.js',
-  './play.test.js'
+  './play.test.js',
+  './guards.test.js'
 ]
 
 for (const suite of SUITES) await import(suite)

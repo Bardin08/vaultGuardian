@@ -12,9 +12,11 @@ import { initModel, shutdownModel, modelInfo } from './qvac.js'
 import { loadLevels, saveLevels, resetLevel, defaultLevels, normalizeLevel } from './levels.js'
 import { runTurn, validateGuess, runInputGuard, replyLeaksPassword, runGuardModelCheck } from './guards.js'
 import { initAuth, needsSetup, setupPassphrase, verifyPassphrase, verifyToken } from './auth.js'
+import { DEFAULT_CTX_SIZE } from './context.js'
+import { withPrompt } from './play.js'
 import {
   initSessions, newSessionId, conversation, pushTurn, resetConversation,
-  solvedLevels, markSolved, checkGuessLimit, isValidSessionId
+  solvedLevels, markSolved, checkGuessLimit, isValidSessionId, promptsLeft, resetGame
 } from './sessions.js'
 
 const ROOT = path.join(new URL('..', import.meta.url).pathname)
@@ -25,7 +27,7 @@ const MAX_BODY_BYTES = 1024 * 1024
 const LOOPBACK_HOSTS = new Set(['127.0.0.1', '::1', 'localhost'])
 const CONFIG = {
   model: bareProcess.env.QVAC_MODEL || 'QWEN3_4B_INST_Q4_K_M',
-  ctxSize: Number(bareProcess.env.QVAC_CTX || 4096),
+  ctxSize: Number(bareProcess.env.QVAC_CTX || DEFAULT_CTX_SIZE),
   freeRoam: bareProcess.env.FREE_ROAM === '1'
 }
 
@@ -37,9 +39,13 @@ function addLog (entry) { logs.unshift({ ts: Date.now(), ...entry }); if (logs.l
 
 // --- tiny HTTP helpers -------------------------------------------------------
 function send (res, status, body, headers = {}) {
-  const data = typeof body === 'string' ? body : JSON.stringify(body)
+  const isBytes = body instanceof Uint8Array
+  const data = typeof body === 'string' || isBytes ? body : JSON.stringify(body)
+  const contentType = typeof body === 'string'
+    ? 'text/plain; charset=utf-8'
+    : isBytes ? 'application/octet-stream' : 'application/json; charset=utf-8'
   res.writeHead(status, {
-    'Content-Type': typeof body === 'string' ? 'text/plain; charset=utf-8' : 'application/json; charset=utf-8',
+    'Content-Type': contentType,
     'Cache-Control': 'no-store',
     'Content-Security-Policy': "default-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; script-src 'self'; connect-src 'self'; object-src 'none'; base-uri 'none'; frame-ancestors 'none'; form-action 'self'",
     'Referrer-Policy': 'no-referrer',
@@ -107,12 +113,24 @@ function requireAdmin (req, res) {
   return false
 }
 
-// public view of a level (no password, no guard internals beyond flags)
-function publicLevel (level, solved, unlocked) {
+// public view of a level: no password, no guard internals beyond on/off
+function publicLevel (level, solved, unlocked, left) {
   return {
-    id: level.id, name: level.name, order: level.order,
-    hint: level.hint || null, solved, unlocked,
-    guessesPerMinute: level.submitValidation?.maxGuessesPerMinute || 10
+    id: level.id,
+    name: level.name,
+    order: level.order,
+    hint: level.hint || null,
+    solved,
+    unlocked,
+    guessesPerMinute: level.submitValidation?.maxGuessesPerMinute || 10,
+    maxPrompts: level.promptBudget.maxPrompts || null,
+    promptsLeft: left,
+    wards: {
+      input: !!level.inputGuard.enabled,
+      output: !!(level.outputGuard.enabled && level.outputGuard.blockIfContainsPassword),
+      fuzzy: !!(level.outputGuard.enabled && level.outputGuard.fuzzy),
+      guardModel: !!level.guardModelCheck.enabled
+    }
   }
 }
 
@@ -121,7 +139,7 @@ function levelsForPlayer (sid) {
   const ordered = [...levels].sort((a, b) => a.order - b.order)
   return ordered.map((lvl, i) => {
     const unlocked = CONFIG.freeRoam || i === 0 || solved.has(ordered[i - 1].id)
-    return publicLevel(lvl, solved.has(lvl.id), unlocked)
+    return publicLevel(lvl, solved.has(lvl.id), unlocked, promptsLeft(sid, lvl))
   })
 }
 
@@ -130,7 +148,7 @@ function isUnlocked (sid, levelId) {
   return view ? view.unlocked : false
 }
 
-const MIME = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.svg': 'image/svg+xml', '.ico': 'image/x-icon', '.json': 'application/json' }
+const MIME = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.svg': 'image/svg+xml', '.ico': 'image/x-icon', '.json': 'application/json', '.woff2': 'font/woff2', '.txt': 'text/plain; charset=utf-8' }
 
 function serveStatic (req, res, urlPath) {
   if (req.method !== 'GET' && req.method !== 'HEAD') return send(res, 405, 'method not allowed', { Allow: 'GET, HEAD' })
@@ -140,7 +158,7 @@ function serveStatic (req, res, urlPath) {
   if (!filePath.startsWith(PUBLIC + path.sep)) return send(res, 403, 'forbidden')
   fs.readFile(filePath, (err, data) => {
     if (err) return send(res, 404, 'not found')
-    send(res, 200, req.method === 'HEAD' ? '' : data.toString(), {
+    send(res, 200, req.method === 'HEAD' ? '' : data, {
       'Content-Type': MIME[path.extname(filePath)] || 'application/octet-stream',
       'Cache-Control': filePath.endsWith('.html') ? 'no-store' : 'public, max-age=3600'
     })
@@ -185,6 +203,12 @@ async function handle (req, res) {
       const sid = ensureSid(req, res)
       const { levelId } = await readBody(req)
       resetConversation(sid, levelId)
+      return json(res, 200, { ok: true })
+    }
+
+    if (p === '/api/game/reset' && req.method === 'POST') {
+      const sid = ensureSid(req, res)
+      resetGame(sid)
       return json(res, 200, { ok: true })
     }
 
@@ -280,7 +304,7 @@ async function handle (req, res) {
   }
 }
 
-// Streamed chat over SSE. `admin` bypasses the unlock gate (live preview).
+// Streamed chat over SSE. `admin` bypasses the unlock gate and the budget.
 async function chat (req, res, sid, body, admin) {
   const { levelId, message } = body
   const level = levels.find(l => l.id === levelId)
@@ -289,18 +313,25 @@ async function chat (req, res, sid, body, admin) {
   const msg = String(message ?? '').slice(0, 4000)
   if (!msg.trim()) return json(res, 400, { error: 'empty message' })
 
-  res.writeHead(200, {
-    'Content-Type': 'text/event-stream',
-    'Cache-Control': 'no-cache',
-    Connection: 'keep-alive'
-  })
   const write = (event, data) => res.write(`event: ${event}\ndata: ${JSON.stringify(data)}\n\n`)
-
   const conv = conversation(sid, levelId)
   try {
-    const result = await runTurn(level, conv, msg, (tok) => write('token', { token: tok }))
+    const outcome = await withPrompt({
+      sid,
+      level,
+      admin,
+      run: () => {
+        res.writeHead(200, { 'Content-Type': 'text/event-stream', 'Cache-Control': 'no-cache', Connection: 'keep-alive' })
+        return runTurn(level, conv, msg, (tok) => write('token', { token: tok }), { ctxSize: CONFIG.ctxSize })
+      }
+    })
+    if (outcome.exhausted) {
+      addLog({ kind: 'chat', levelId, admin, blockedAt: 'budget' })
+      return json(res, 403, { error: 'prompt budget exhausted' })
+    }
+    const result = outcome.result
     if (!result.streamed) write('message', { text: result.text })
-    write('done', { blockedAt: result.blockedAt })
+    write('done', { blockedAt: result.blockedAt, forgotten: result.forgotten, promptsLeft: admin ? null : promptsLeft(sid, level) })
     pushTurn(sid, levelId, msg, result.text)
     addLog({ kind: 'chat', levelId, admin, blockedAt: result.blockedAt })
   } catch (err) {
