@@ -14,6 +14,7 @@ import { runTurn, validateGuess, runInputGuard, replyLeaksPassword, runGuardMode
 import { initAuth, needsSetup, setupPassphrase, verifyPassphrase, verifyToken } from './auth.js'
 import { parseCtxSize } from './context.js'
 import { withPrompt } from './play.js'
+import { contentTypeFor, cacheControlFor } from './static.js'
 import {
   initSessions, newSessionId, conversation, pushTurn, resetConversation,
   solvedLevels, markSolved, checkGuessLimit, isValidSessionId, promptsLeft, resetGame
@@ -148,8 +149,6 @@ function isUnlocked (sid, levelId) {
   return view ? view.unlocked : false
 }
 
-const MIME = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.svg': 'image/svg+xml', '.ico': 'image/x-icon', '.json': 'application/json', '.woff2': 'font/woff2', '.txt': 'text/plain; charset=utf-8' }
-
 function serveStatic (req, res, urlPath) {
   if (req.method !== 'GET' && req.method !== 'HEAD') return send(res, 405, 'method not allowed', { Allow: 'GET, HEAD' })
   let rel = urlPath === '/' ? '/index.html' : urlPath
@@ -162,8 +161,8 @@ function serveStatic (req, res, urlPath) {
     // itself on HEAD, so HEAD gets the file too. Setting the length here
     // would send it twice, and HEAD with an empty body would announce 0.
     send(res, 200, data, {
-      'Content-Type': MIME[path.extname(filePath)] || 'application/octet-stream',
-      'Cache-Control': filePath.endsWith('.html') ? 'no-store' : 'public, max-age=3600'
+      'Content-Type': contentTypeFor(filePath),
+      'Cache-Control': cacheControlFor(filePath)
     })
   })
 }
