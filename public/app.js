@@ -252,11 +252,13 @@ function addNote (text) {
 
 // ---- actions ----
 async function refreshState () {
+  const previous = current
   const r = await api('/api/state')
   state = { levels: r.levels || [], model: r.model || {} }
   if (!levelById(current)?.unlocked) current = state.levels.find(l => l.unlocked && !l.solved)?.id || state.levels[0]?.id || null
   renderDoor()
   renderHall()
+  if (previous !== null && current && current !== previous) selectLevel(current, { force: true })
 }
 
 function selectLevel (id, { force = false } = {}) {
@@ -328,7 +330,12 @@ async function send (event) {
   }
   $('log').removeAttribute('aria-busy')
   busy = false
-  await refreshState()
+  try {
+    await refreshState()
+  } catch {
+    setComposer()
+    addNote(NO_ANSWER)
+  }
   $('chatInput').focus()
 }
 
@@ -384,7 +391,11 @@ async function forget () {
 
 async function newGame () {
   if (!confirm('Seal the vault and start a new game? Every tumbler resets and your breaths refill.')) return
-  await api('/api/game/reset', { method: 'POST' })
+  const r = await api('/api/game/reset', { method: 'POST' }).catch(() => ({ status: 0 }))
+  if (r.status !== 200) {
+    addNote(NO_ANSWER)
+    return
+  }
   current = null
   forgottenSeen.clear()
   await refreshState()
