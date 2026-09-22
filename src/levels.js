@@ -158,11 +158,12 @@ const LEVELS_FILE = 'levels.json'
 export function loadLevels () {
   const saved = readJSON(LEVELS_FILE, null)
   if (!Array.isArray(saved)) {
+    if (saved !== null) console.warn(`[levels] ${LEVELS_FILE} is not an array; replacing it with the shipped levels`)
     const levels = defaultLevels()
     writeJSON(LEVELS_FILE, levels)
     return levels
   }
-  return saved.map(normalizeLevel)
+  return saved.filter(l => l !== null && typeof l === 'object' && !Array.isArray(l)).map(normalizeLevel)
 }
 
 export function saveLevels (levels) {

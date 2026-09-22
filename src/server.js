@@ -12,7 +12,7 @@ import { initModel, shutdownModel, modelInfo } from './qvac.js'
 import { loadLevels, saveLevels, resetLevel, defaultLevels, normalizeLevel } from './levels.js'
 import { runTurn, validateGuess, runInputGuard, replyLeaksPassword, runGuardModelCheck } from './guards.js'
 import { initAuth, needsSetup, setupPassphrase, verifyPassphrase, verifyToken } from './auth.js'
-import { DEFAULT_CTX_SIZE } from './context.js'
+import { parseCtxSize } from './context.js'
 import { withPrompt } from './play.js'
 import {
   initSessions, newSessionId, conversation, pushTurn, resetConversation,
@@ -27,7 +27,7 @@ const MAX_BODY_BYTES = 1024 * 1024
 const LOOPBACK_HOSTS = new Set(['127.0.0.1', '::1', 'localhost'])
 const CONFIG = {
   model: bareProcess.env.QVAC_MODEL || 'QWEN3_4B_INST_Q4_K_M',
-  ctxSize: Number(bareProcess.env.QVAC_CTX || DEFAULT_CTX_SIZE),
+  ctxSize: parseCtxSize(bareProcess.env.QVAC_CTX),
   freeRoam: bareProcess.env.FREE_ROAM === '1'
 }
 

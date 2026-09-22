@@ -1,5 +1,5 @@
 import { test, assert, assertEqual } from './harness.js'
-import { estimateTokens, trimHistory } from '../src/context.js'
+import { estimateTokens, trimHistory, parseCtxSize, DEFAULT_CTX_SIZE } from '../src/context.js'
 
 const CHARS_PER_TOKEN = 3
 const ROOMY_TOKENS = 3000
@@ -102,4 +102,54 @@ test('trimHistory rejects a non-finite maxContextTokens', () => {
   }
   assert(caught instanceof TypeError, 'expected a TypeError')
   assert(caught.message.includes('maxContextTokens'), 'error should name maxContextTokens')
+})
+
+test('trimHistory rejects a non-finite ctxSize', () => {
+  let caught
+  try {
+    trimHistory({ ...BASE, history: pairs(PAIRS_THAT_FIT), ctxSize: NaN })
+  } catch (err) {
+    caught = err
+  }
+  assert(caught instanceof TypeError, 'expected a TypeError')
+  assert(caught.message.includes('ctxSize'), 'error should name ctxSize')
+})
+
+test('trimHistory rejects a non-finite replyReserve', () => {
+  let caught
+  try {
+    trimHistory({ ...BASE, history: pairs(PAIRS_THAT_FIT), replyReserve: NaN })
+  } catch (err) {
+    caught = err
+  }
+  assert(caught instanceof TypeError, 'expected a TypeError')
+  assert(caught.message.includes('replyReserve'), 'error should name replyReserve')
+})
+
+test('parseCtxSize reads a positive whole number', () => {
+  const RAW_CTX = '8192'
+  const PARSED_CTX = 8192
+  assertEqual(parseCtxSize(RAW_CTX), PARSED_CTX)
+})
+
+test('parseCtxSize falls back to the default when unset', () => {
+  assertEqual(parseCtxSize(undefined), DEFAULT_CTX_SIZE)
+})
+
+test('parseCtxSize falls back to the default on garbage, zero or a negative', () => {
+  const GARBAGE = 'lots'
+  const ZERO = '0'
+  const NEGATIVE = '-1024'
+  const quiet = () => {}
+  assertEqual(parseCtxSize(GARBAGE, quiet), DEFAULT_CTX_SIZE)
+  assertEqual(parseCtxSize(ZERO, quiet), DEFAULT_CTX_SIZE)
+  assertEqual(parseCtxSize(NEGATIVE, quiet), DEFAULT_CTX_SIZE)
+})
+
+test('parseCtxSize warns naming QVAC_CTX when it falls back', () => {
+  const GARBAGE = 'lots'
+  const warnings = []
+  parseCtxSize(GARBAGE, (text) => warnings.push(text))
+  assertEqual(warnings.length, 1)
+  assert(warnings[0].includes('QVAC_CTX'), 'warning should name QVAC_CTX')
 })

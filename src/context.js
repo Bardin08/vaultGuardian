@@ -21,6 +21,8 @@ function requireFiniteNumber (value, name) {
 export function trimHistory ({ systemPrompt, history, message, maxTurns, maxContextTokens, ctxSize = DEFAULT_CTX_SIZE, replyReserve = REPLY_RESERVE_TOKENS }) {
   requireFiniteNumber(maxTurns, 'maxTurns')
   requireFiniteNumber(maxContextTokens, 'maxContextTokens')
+  requireFiniteNumber(ctxSize, 'ctxSize')
+  requireFiniteNumber(replyReserve, 'replyReserve')
   const limit = Math.min(maxContextTokens, ctxSize - replyReserve)
   const pairs = []
   for (let i = 0; i + 1 < history.length; i += 2) pairs.push([history[i], history[i + 1]])
@@ -33,4 +35,15 @@ export function trimHistory ({ systemPrompt, history, message, maxTurns, maxCont
     forgotten++
   }
   return { history: pairs.flat(), forgotten }
+}
+
+// Reads the model context size from the QVAC_CTX environment value. Anything
+// that is not a positive whole number falls back to the default, loudly, so a
+// typo cannot reach trimHistory as NaN.
+export function parseCtxSize (raw, warn = console.warn) {
+  if (raw === undefined || raw === '') return DEFAULT_CTX_SIZE
+  const n = Number(raw)
+  if (Number.isSafeInteger(n) && n > 0) return n
+  warn(`QVAC_CTX must be a positive whole number, got ${JSON.stringify(raw)}; using ${DEFAULT_CTX_SIZE}`)
+  return DEFAULT_CTX_SIZE
 }
