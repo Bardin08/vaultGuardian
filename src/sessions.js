@@ -4,14 +4,37 @@ import crypto from 'bare-crypto'
 import { readJSON, writeJSON } from './store.js'
 
 const PROGRESS_FILE = 'progress.json'
-const MAX_TURNS = 20 // context discipline: cap conversation length per attempt
+// Trimming decides what the model sees; this only bounds memory use.
+const MAX_STORED_TURNS = 100
 
 const sessions = new Map()
-let progress = null
+let progress = new Map()
 const SESSION_ID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
 
+function emptyProgress () {
+  return { solved: [], promptsUsed: Object.create(null) }
+}
+
+// Accepts the current shape and the older { sid: [levelId, ...] } one.
 export function initSessions () {
-  progress = readJSON(PROGRESS_FILE, {})
+  const saved = readJSON(PROGRESS_FILE, {})
+  progress = new Map()
+  for (const [sid, value] of Object.entries(saved)) {
+    if (!isValidSessionId(sid)) continue
+    const record = emptyProgress()
+    record.solved = Array.isArray(value) ? value : (value?.solved || [])
+    Object.assign(record.promptsUsed, Array.isArray(value) ? {} : value?.promptsUsed)
+    progress.set(sid, record)
+  }
+}
+
+function saveProgress () {
+  writeJSON(PROGRESS_FILE, Object.fromEntries(progress))
+}
+
+function progressOf (sid) {
+  if (!progress.has(sid)) progress.set(sid, emptyProgress())
+  return progress.get(sid)
 }
 
 export function getSession (sid) {
@@ -40,7 +63,7 @@ export function conversation (sid, levelId) {
 export function pushTurn (sid, levelId, userMsg, assistantMsg) {
   const conv = conversation(sid, levelId)
   conv.push({ role: 'user', content: userMsg }, { role: 'assistant', content: assistantMsg })
-  while (conv.length > MAX_TURNS * 2) conv.shift()
+  while (conv.length > MAX_STORED_TURNS * 2) conv.shift()
 }
 
 export function resetConversation (sid, levelId) {
@@ -48,14 +71,13 @@ export function resetConversation (sid, levelId) {
 }
 
 export function solvedLevels (sid) {
-  return new Set(progress[sid] || [])
+  return new Set(progress.get(sid)?.solved || [])
 }
 
 export function markSolved (sid, levelId) {
-  const set = solvedLevels(sid)
-  set.add(levelId)
-  progress[sid] = [...set]
-  writeJSON(PROGRESS_FILE, progress)
+  const record = progressOf(sid)
+  if (!record.solved.includes(levelId)) record.solved.push(levelId)
+  saveProgress()
 }
 
 // Returns remaining guesses in the current window, or -1 if rate limited.
@@ -71,4 +93,36 @@ export function checkGuessLimit (sid, levelId, perMinute) {
   times.push(now)
   s.guesses.set(levelId, times)
   return perMinute - times.length
+}
+
+// null means the level has no budget (maxPrompts 0).
+export function promptsLeft (sid, level) {
+  const max = level.promptBudget?.maxPrompts || 0
+  if (max === 0) return null
+  const used = progress.get(sid)?.promptsUsed[level.id] || 0
+  return Math.max(0, max - used)
+}
+
+export function spendPrompt (sid, level) {
+  const left = promptsLeft(sid, level)
+  if (left === null) return true
+  if (left === 0) return false
+  const record = progressOf(sid)
+  record.promptsUsed[level.id] = (record.promptsUsed[level.id] || 0) + 1
+  saveProgress()
+  return true
+}
+
+export function refundPrompt (sid, level) {
+  const record = progress.get(sid)
+  if (!record || !record.promptsUsed[level.id]) return
+  record.promptsUsed[level.id]--
+  saveProgress()
+}
+
+// New game: forget solves, budgets, conversations and guess windows.
+export function resetGame (sid) {
+  progress.delete(sid)
+  sessions.delete(sid)
+  saveProgress()
 }
