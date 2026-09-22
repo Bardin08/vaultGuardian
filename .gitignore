@@ -1,4 +1,5 @@
 node_modules/
+# worktrees link node_modules as a symlink, which the directory pattern above does not match
 node_modules
 data/
 .claude/

@@ -33,6 +33,9 @@ const TUMBLER_TURN_MS = 1200
 const EVENT_PREFIX = 'event: '
 const DATA_PREFIX = 'data: '
 const NO_ANSWER = 'The door did not answer. Try again.'
+// The server refunds the prompt whenever the model fails, before or during the reply.
+const MODEL_FAILED = 'The guardian lost his words. Your breath was returned.'
+const MODEL_FAILED_STATUS = 500
 
 const WARD_LABELS = {
   input: 'Word ward on your tongue',
@@ -401,6 +404,8 @@ async function send (event) {
     if (res.status === 403) {
       const body = await res.json().catch(() => ({}))
       failed = body.error === 'prompt budget exhausted' ? 'Your breaths are spent on this tumbler.' : 'This tumbler is still sealed.'
+    } else if (res.status === MODEL_FAILED_STATUS) {
+      failed = MODEL_FAILED
     } else if (!res.ok) {
       failed = NO_ANSWER
     } else {
@@ -408,7 +413,7 @@ async function send (event) {
         if (ev === 'token') { text += data.token; reply.body.textContent = text }
         else if (ev === 'message') { text = data.text; reply.body.textContent = text }
         else if (ev === 'done') done = data
-        else if (ev === 'error') failed = 'The guardian lost his words. Your breath was returned.'
+        else if (ev === 'error') failed = MODEL_FAILED
       })
     }
   } catch {
@@ -460,7 +465,12 @@ async function guess (event) {
     input.value = ''
     $('guessStatus').textContent = 'The tumbler turns.'
     addNote(`${guardianName(level)} yields. The tumbler turns.`)
-    await refreshState()
+    try {
+      await refreshState()
+    } catch {
+      addNote(NO_ANSWER)
+      return
+    }
     const next = state.levels[levelIndex(level.id) + 1]
     if (next?.unlocked) {
       addNote(`Tumbler ${roman(levelIndex(next.id) + 1)} is open: ${guardianName(next)} waits.`)
