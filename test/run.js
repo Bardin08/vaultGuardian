@@ -9,7 +9,8 @@ bareProcess.env.ADMIN_PASSPHRASE = TEST_PASSPHRASE
 bareProcess.env.QVAC_MOCK = '1'
 
 const SUITES = [
-  './security.test.js'
+  './security.test.js',
+  './context.test.js'
 ]
 
 for (const suite of SUITES) await import(suite)
