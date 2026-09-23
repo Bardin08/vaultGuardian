@@ -1,9 +1,13 @@
 // Admin console. Token kept in memory + sessionStorage; sent as Bearer.
+import { levelToMarkdown, levelsToMarkdown, exportFileName, allLevelsFileName } from '/level-export.js'
+
 const $ = (id) => document.getElementById(id)
 let token = sessionStorage.getItem('vg_admin') || null
 let levels = []
 let config = {}
+let runtime = {}
 let selected = null
+let includePassword = false // shared across level switches and "Export all levels"
 
 function toast (msg, kind = 'ok') {
   const t = $('toast'); t.textContent = msg; t.className = `toast show ${kind}`
@@ -79,6 +83,7 @@ async function loadLevels () {
   const r = await api('/api/admin/levels')
   levels = r.levels || []
   config = r.config || {}
+  runtime = r.runtime || {}
   renderList()
   if (!levels.length) return showNoLevels()
   if (!selected && levels[0]) selectLevel(levels[0].id)
@@ -183,10 +188,13 @@ function renderEditForm (l) {
       </div>
     </fieldset>
 
-    <div style="display:flex;gap:8px;flex-wrap:wrap">
+    <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
       <button id="saveBtn" class="btn">Save changes</button>
       <button id="resetLvlBtn" class="btn ghost">Reset to default</button>
       <button id="dupBtn" class="btn ghost">Duplicate</button>
+      <div class="chk chk-inline"><input type="checkbox" id="e_include_pw" ${includePassword ? 'checked' : ''}><label for="e_include_pw" style="margin:0">Include password</label></div>
+      <button id="exportBtn" class="btn ghost">Export .md</button>
+      <button id="copyBtn" class="btn ghost">Copy</button>
       <button id="delBtn" class="btn ghost danger">Delete</button>
     </div>`
 
@@ -194,7 +202,98 @@ function renderEditForm (l) {
   $('resetLvlBtn').onclick = resetLevel
   $('dupBtn').onclick = duplicateLevel
   $('delBtn').onclick = deleteLevel
+  $('e_include_pw').onchange = () => { includePassword = $('e_include_pw').checked }
+  $('exportBtn').onclick = exportLevel
+  $('copyBtn').onclick = copyLevel
 }
+
+// ---- export ----
+function normalizeLevel (l) {
+  return {
+    name: l.name,
+    order: Number(l.order),
+    password: l.password,
+    hint: l.hint || '',
+    systemPrompt: l.systemPrompt,
+    inputGuard: {
+      enabled: !!l.inputGuard.enabled,
+      blocklist: (l.inputGuard.blocklist || []).map(s => String(s).trim()).filter(Boolean),
+      onBlock: l.inputGuard.onBlock
+    },
+    outputGuard: {
+      enabled: !!l.outputGuard.enabled,
+      blockIfContainsPassword: !!l.outputGuard.blockIfContainsPassword,
+      fuzzy: !!l.outputGuard.fuzzy,
+      onBlock: l.outputGuard.onBlock
+    },
+    guardModelCheck: { enabled: !!l.guardModelCheck.enabled, prompt: l.guardModelCheck.prompt },
+    submitValidation: { mode: l.submitValidation.mode, maxGuessesPerMinute: Number(l.submitValidation.maxGuessesPerMinute) },
+    promptBudget: { maxPrompts: Number(l.promptBudget.maxPrompts) },
+    memory: { maxTurns: Number(l.memory.maxTurns), maxContextTokens: Number(l.memory.maxContextTokens) }
+  }
+}
+
+function isEdited (formLevel, saved) {
+  return JSON.stringify(normalizeLevel(formLevel)) !== JSON.stringify(normalizeLevel(saved))
+}
+
+function levelPosition (id) {
+  const ordered = [...levels].sort((a, b) => a.order - b.order)
+  return { position: ordered.findIndex(x => x.id === id) + 1, total: ordered.length }
+}
+
+function downloadMarkdown (text, filename) {
+  const blob = new Blob([text], { type: 'text/markdown;charset=utf-8' })
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = filename
+  document.body.appendChild(a)
+  a.click()
+  a.remove()
+  URL.revokeObjectURL(url)
+}
+
+function exportOptionsFor (saved) {
+  const formLevel = formToLevel(saved)
+  const { position, total } = levelPosition(saved.id)
+  return {
+    formLevel,
+    opts: {
+      includePassword,
+      position,
+      total,
+      runtime,
+      generatedAt: new Date(),
+      edited: isEdited(formLevel, saved)
+    }
+  }
+}
+
+function exportLevel () {
+  const saved = levels.find(x => x.id === selected)
+  if (!saved) return
+  const { formLevel, opts } = exportOptionsFor(saved)
+  downloadMarkdown(levelToMarkdown(formLevel, opts), exportFileName(formLevel))
+}
+
+async function copyLevel () {
+  const saved = levels.find(x => x.id === selected)
+  if (!saved) return
+  const { formLevel, opts } = exportOptionsFor(saved)
+  try {
+    await navigator.clipboard.writeText(levelToMarkdown(formLevel, opts))
+    toast('Copied')
+  } catch (err) {
+    toast(err.message || 'copy failed', 'bad')
+  }
+}
+
+function exportAllLevels () {
+  const md = levelsToMarkdown(levels, { includePassword, runtime, generatedAt: new Date() })
+  downloadMarkdown(md, allLevelsFileName(new Date()))
+}
+$('exportAllBtn').onclick = exportAllLevels
 
 function formToLevel (l) {
   const bl = $('e_ig_bl').value.split(',').map(s => s.trim()).filter(Boolean)
