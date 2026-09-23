@@ -1,0 +1,88 @@
+{
+  "title": "Vault Guardian: choose the visual world",
+  "question": "Player screen, Level IV mid-game, with the new prompt budget and New game button. Keep the roll, take an alternate, or re-roll.",
+  "options": [
+    {
+      "id": "assigned",
+      "label": "The Arcane Vault Door",
+      "kicker": "THE ROLL",
+      "lineage": "Dwarven vault doors and bank-safe combination dials, engraved in bronze",
+      "thesis": "The game is a door with seven tumblers; every level you solve turns one into place.",
+      "palette": ["#173a35", "#b0773a", "#efe6d2", "#ff6a2b", "#0c1c19"],
+      "materials": ["patinated bronze", "engraved Roman caps", "verdigris"],
+      "viewport": "Left half: the round door, seven concentric rings; the password slot sits in the hub. Right half: the guardian's dialogue as engraved speech, with the prompt budget in bronze pips.",
+      "risk": "Tips into steampunk costume if the rings stop doing work; the circular door needs a stacked layout on phones.",
+      "raised": [
+        { "from": "vertical-video-feed", "raise": "One guardian owns the whole right half; no level list competes with the conversation." },
+        { "from": "vu-meter-bridge", "raise": "Prompt budget is a row of identical pips, read as a ruler at a glance." },
+        { "from": "normalled-jackfield", "raise": "Ring state is carried by notch shape (aligned, turned, hollow), never by colour alone." },
+        { "from": "raku-smoke-flash", "raise": "Ember orange is reserved for the one live tumbler and for a ward that fired." }
+      ],
+      "comp": ".impeccable/mocks/decision/assigned.jpg"
+    },
+    {
+      "id": "model-pick",
+      "label": "The Dialogue Box",
+      "kicker": "IMPECCABLE’S PICK",
+      "lineage": "16-bit JRPG text windows (Dragon Quest, Final Fantasy)",
+      "thesis": "Talking an NPC into giving something up is the oldest JRPG move; the interface is that text window.",
+      "palette": ["#0b1466", "#1d2fa8", "#ffffff", "#ffd84a", "#ff4b4b"],
+      "materials": ["double-bordered windows", "pixel sprite", "world-map path"],
+      "viewport": "A world-map strip of seven towers on top, the guardian sprite in the middle, the dialogue window below, and a TALK / GUESS / NEW GAME command menu on the right.",
+      "risk": "Familiar: every engineer at the stand knows it at once, and that is also why it reads as nostalgia rather than as its own thing.",
+      "comp": ".impeccable/mocks/decision/model-pick.jpg"
+    },
+    {
+      "id": "challenger-bass",
+      "label": "The Title Sequence",
+      "verdict": "competitive",
+      "lineage": "Saul Bass title sequences, in cut paper",
+      "thesis": "Each level is an act with its own flat colour field and a cut-paper guardian silhouette.",
+      "palette": ["#e0591f", "#111111", "#f2ead9"],
+      "materials": ["cut paper", "flat field", "condensed hand-set caps"],
+      "viewport": "Giant tilted guardian name over a paper silhouette on the left; the conversation as stacked paper cards on the right; the field colour changes per level.",
+      "case": "Carries the wizard fantasy through silhouettes and reads from across a conference hall; weaker on showing which ward fired.",
+      "risk": "Seven different field colours have to stay legible; shapes need drawing, one per guardian.",
+      "comp": ".impeccable/mocks/decision/challenger-bass.jpg",
+      "hero": "https://impeccable.style/worlds/cards/posters-covers-sleeves-saul-bass-title-hero.webp"
+    },
+    {
+      "id": "challenger-jacquard",
+      "label": "Jacquard Brocade",
+      "verdict": "declined",
+      "lineage": "punched-card looms",
+      "palette": ["#141d3b", "#d4a53c", "#efe4c8"],
+      "materials": ["woven silk", "punch cards"],
+      "thesis": "Every thread decision traceable to its punched row.",
+      "viewport": "Loom rows of guard decisions.",
+      "risk": "Players do not identify with weaving.",
+      "case": "Fuses poorly: the metaphor needs explaining at a booth.",
+      "kept": "Every block is traceable to the ward that caused it."
+    },
+    {
+      "id": "challenger-vu",
+      "label": "VU Meter Bridge",
+      "verdict": "declined",
+      "lineage": "recording-desk meters",
+      "palette": ["#efe6cf", "#111111", "#c8321e"],
+      "materials": ["meter glass", "walnut"],
+      "thesis": "Guard stages as a row of needles.",
+      "viewport": "A bridge of meters over the chat.",
+      "risk": "Drops the wizard fantasy.",
+      "case": "Loses on audience fit: a studio, not a vault.",
+      "kept": "Identical repeated units as a ruler (the prompt pips)."
+    }
+  ],
+  "reroll": { "registers": ["safer", "bolder"] },
+  "canon": true,
+  "canonCard": {
+    "label": "The category standard",
+    "thesis": "A clean light chat app, the way Gandalf itself ships.",
+    "palette": ["#ffffff", "#111827", "#2563eb"],
+    "materials": ["clean grid", "system font"],
+    "viewport": "Level list left, chat right, meter under the title, password field under the composer.",
+    "risk": "Indistinguishable from the competition by design; drops the fantasy to decoration.",
+    "comp": ".impeccable/mocks/decision/canon.jpg"
+  },
+  "steer": true
+}

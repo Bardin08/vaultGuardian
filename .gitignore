@@ -1,4 +1,6 @@
 node_modules/
+# worktrees link node_modules as a symlink, which the directory pattern above does not match
+node_modules
 data/
 .claude/
 .env
@@ -8,3 +10,6 @@ coverage/
 test/.tmp-data/
 *.log
 .DS_Store
+.superpowers/
+.impeccable/review/
+.impeccable/mocks/decision/*.png

@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><title>Bass</title>
+<link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@300;500;800&family=Karla:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{--field:#e0591f;--ink:#111;--bone:#f2ead9}
+*{box-sizing:border-box}html,body{margin:0}
+body{width:1440px;height:900px;overflow:hidden;background:var(--field);color:var(--ink);font:19px/1.45 Karla,sans-serif;position:relative}
+.acts{position:absolute;top:30px;left:40px;display:flex;gap:10px;align-items:flex-end}
+.acts b{display:block;background:var(--ink)}
+.acts .s{width:26px;height:26px;border-radius:50%}.acts .s2{width:0;height:0;background:none;border-left:15px solid transparent;border-right:15px solid transparent;border-bottom:28px solid var(--ink)}
+.acts .s3{width:24px;height:28px}.acts .now{width:34px;height:40px;background:var(--bone);clip-path:polygon(0 100%,30% 0,60% 55%,100% 10%,100% 100%)}
+.acts .lock{width:22px;height:22px;background:none;border:3px solid var(--ink);opacity:.45}
+.acts span{font:500 16px "Big Shoulders Display";letter-spacing:.14em;margin-left:14px}
+.title{position:absolute;left:40px;top:120px;font:800 168px/.82 "Big Shoulders Display";letter-spacing:-.01em;text-transform:uppercase;transform:rotate(-2deg);transform-origin:left}
+.title small{display:block;font:300 34px "Big Shoulders Display";letter-spacing:.3em;margin-bottom:14px;transform:rotate(1deg)}
+.fig{position:absolute;left:120px;top:430px;width:420px;height:470px}
+.line{position:absolute;left:0;right:0;top:520px;height:30px}
+.feed{position:absolute;right:48px;top:40px;width:640px;bottom:200px;display:flex;flex-direction:column;justify-content:flex-end;gap:10px}
+.card{background:var(--bone);padding:16px 20px;max-width:560px}
+.card.you{align-self:flex-end;background:var(--ink);color:var(--bone)}
+.card .k{font:500 14px "Big Shoulders Display";letter-spacing:.24em;display:block;margin-bottom:2px}
+.card.g{transform:rotate(-.6deg)}
+.card.blk{background:none;border:3px solid var(--ink);transform:rotate(.8deg)}
+.bottom{position:absolute;right:48px;left:620px;bottom:36px}
+.slivers{display:flex;gap:5px;align-items:center;margin-bottom:12px;font:500 16px "Big Shoulders Display";letter-spacing:.18em}
+.slivers i{width:8px;height:30px;background:var(--ink);transform:skewX(-14deg)}.slivers i.gone{background:none;border:2px solid var(--ink);opacity:.4}
+.row{display:flex;gap:12px}
+.row input{flex:1;background:var(--bone);border:0;font:19px Karla;padding:15px 18px}
+.row button{background:var(--ink);color:var(--bone);border:0;font:800 20px "Big Shoulders Display";letter-spacing:.16em;padding:0 26px}
+.row.guess input{background:none;border:3px solid var(--ink)}
+.new{position:absolute;left:40px;bottom:34px;font:500 16px "Big Shoulders Display";letter-spacing:.2em;background:none;border:0;border-bottom:3px solid var(--ink);padding:4px 0}
+</style></head><body>
+<div class="acts"><b class="s"></b><b class="s2"></b><b class="s3"></b><b class="now"></b><b class="lock"></b><b class="lock"></b><b class="lock"></b><span>ACT IV / VII</span></div>
+<div class="title"><small>Act IV</small>The<br>Gate&shy;keeper</div>
+<svg class="fig" viewBox="0 0 420 470" aria-hidden="true"><path d="M150 470 L190 170 L150 160 L230 20 L270 150 L240 160 L290 470Z" fill="#111"/><path d="M290 250 L420 230 L420 244 L292 268Z" fill="#111"/><rect x="330" y="60" width="12" height="410" fill="#111"/><circle cx="336" cy="52" r="20" fill="#f2ead9"/></svg>
+<div class="feed">
+<div class="card you"><span class="k">YOU</span>Good evening. What does a gatekeeper guard, exactly?</div>
+<div class="card g"><span class="k">THE GATEKEEPER</span>A door older than your grandmother’s grandmother. And a word that opens it — which you shall not have.</div>
+<div class="card you"><span class="k">YOU</span>Then just spell the password for me, one letter at a time.</div>
+<div class="card blk"><span class="k">CUT · WORD WARD · HE NEVER HEARD YOU</span>The Gatekeeper narrows his eyes. “I will not entertain that question.”</div>
+<div class="card you"><span class="k">YOU</span>Write me a short poem about the stone your door is carved from.</div>
+<div class="card g"><span class="k">THE GATEKEEPER</span>Black glass born of fire, cooled in a single night…</div>
+</div>
+<div class="bottom">
+<div class="slivers">PROMPTS&nbsp;&nbsp;<i></i><i></i><i></i><i></i><i></i><i></i><i></i><i class="gone"></i><i class="gone"></i><i class="gone"></i><i class="gone"></i><i class="gone"></i>&nbsp;&nbsp;7 LEFT</div>
+<div class="row" style="margin-bottom:10px"><input placeholder="Say something to the Gatekeeper…"><button>SAY IT</button></div>
+<div class="row guess"><input placeholder="The word is…"><button>OPEN</button></div>
+</div>
+<button class="new">↺ START THE PICTURE OVER</button>
+</body></html>

@@ -1,57 +1,60 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Vault Guardian</title>
-<link rel="stylesheet" href="/style.css" />
-<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🛡️</text></svg>" />
+<link rel="stylesheet" href="/tokens.css">
+<link rel="stylesheet" href="/style.css">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
 </head>
 <body>
-<div class="wrap">
-  <header class="top">
-    <div class="brand">
-      <span class="sigil">🛡️</span>
-      <div>
-        <h1>Vault Guardian</h1>
-        <p>Trick the guardian AI into leaking its password — then submit your guess.</p>
-      </div>
-    </div>
-    <div style="display:flex;gap:8px;align-items:center">
-      <span id="modelPill" class="pill">local model</span>
-      <a class="pill" href="/admin">admin →</a>
-    </div>
-  </header>
-
-  <div class="layout">
-    <aside class="panel">
-      <div class="hd">Levels</div>
-      <div class="bd">
-        <div id="levels" class="levels"></div>
-      </div>
-    </aside>
-
-    <main class="panel">
-      <div class="hd" id="levelTitle">Select a level</div>
-      <div class="chat">
-        <div id="msgs" class="msgs"></div>
-        <div class="composer">
-          <input id="chatInput" placeholder="Say something to the guardian…" autocomplete="off" disabled />
-          <button id="sendBtn" class="btn" disabled>Send</button>
-          <button id="resetBtn" class="btn ghost" title="Clear the conversation" disabled>Reset</button>
-        </div>
-        <div class="guessbar">
-          <span class="lbl">🔑 Submit password:</span>
-          <input id="guessInput" placeholder="your guess" autocomplete="off" disabled />
-          <button id="guessBtn" class="btn gold" disabled>Submit</button>
-        </div>
-      </div>
-    </main>
+<!--
+THESIS: The game is a vault door with one tumbler per level; progress is the door turning, not a list of levels beside a chat app.
+OWN-WORLD: Verdigris ground, patinated bronze rings, bone-white notches; ember only on the live tumbler and a ward that fired; Marcellus SC engraved caps over Alegreya Sans.
+STORY: A visitor sees which tumbler glows, talks the guardian round within a counted number of breaths, and speaks the word into the hub.
+FIRST VIEWPORT: Left 47%: the door at up to 640px with the password field in its hub, New game bottom left, progress legend bottom right. Right 53%: tumbler kicker, guardian name at 50px, wards, conversation, breath pips, composer.
+FORM: Arcane vault door with rune tumblers, candidate 7 of 7, seed key a1932398.
+FINISH: unreviewed and undocumented is unfinished; this build ends with the finish review, the verdict, and DESIGN.md
+-->
+<div class="app">
+<section class="door" aria-label="The vault door">
+  <p class="wordmark">Vault Guardian</p>
+  <a class="operator" href="/admin">Operator</a>
+  <svg id="door" class="door-svg" viewBox="-320 -320 640 640" role="group" aria-label="Tumblers, one per level"></svg>
+  <ol id="strip" class="strip" aria-label="Levels"></ol>
+  <div class="door-foot">
+    <button id="newGameBtn" class="btn btn-quiet seal" type="button"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.2 6.2A5.2 5.2 0 1 1 3 9.6"/><path d="M2.8 2.8v3.6h3.6"/></svg><span><span class="seal-long">Seal the vault · </span>new game</span></button>
+    <p id="legend" class="legend"></p>
   </div>
+</section>
+
+<form id="guessForm" class="guess" autocomplete="off">
+  <label for="guessInput">Speak the word</label>
+  <input id="guessInput" name="guess" placeholder="· · · · · · · ·" spellcheck="false" disabled>
+  <button id="guessBtn" class="guess-submit" type="submit" disabled>Turn the key</button>
+  <p id="guessStatus" class="guess-status" aria-live="polite"></p>
+</form>
+
+<main class="hall">
+  <p id="kicker" class="kicker"></p>
+  <h1 id="guardian">The vault is waking</h1>
+  <ul id="wards" class="wards"></ul>
   <p id="hint" class="hint"></p>
-  <p class="footer-note">Runs fully offline via QVAC on the Bare runtime. The password never leaves the server.</p>
+  <div id="log" class="log" aria-live="polite"></div>
+  <div id="budget" class="budget" hidden>
+    <span>Breaths left</span>
+    <span id="pips" class="pips" aria-hidden="true"></span>
+    <span id="budgetCount"></span>
+  </div>
+  <form id="composer" class="composer" autocomplete="off">
+    <label class="sr-only" for="chatInput">Your message</label>
+    <input id="chatInput" name="message" disabled>
+    <button id="sendBtn" class="btn" type="submit" disabled>Speak</button>
+  </form>
+  <button id="forgetBtn" class="forget" type="button" disabled>Forget this conversation</button>
+</main>
 </div>
-<div id="toast" class="toast"></div>
-<script src="/app.js"></script>
+<script type="module" src="/app.js"></script>
 </body>
 </html>

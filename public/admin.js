@@ -1,9 +1,13 @@
 // Admin console. Token kept in memory + sessionStorage; sent as Bearer.
+import { levelToMarkdown, levelsToMarkdown, exportFileName, allLevelsFileName } from '/level-export.js'
+
 const $ = (id) => document.getElementById(id)
 let token = sessionStorage.getItem('vg_admin') || null
 let levels = []
 let config = {}
+let runtime = {}
 let selected = null
+let includePassword = false // shared across level switches and "Export all levels"
 
 function toast (msg, kind = 'ok') {
   const t = $('toast'); t.textContent = msg; t.className = `toast show ${kind}`
@@ -79,9 +83,19 @@ async function loadLevels () {
   const r = await api('/api/admin/levels')
   levels = r.levels || []
   config = r.config || {}
+  runtime = r.runtime || {}
   renderList()
+  if (!levels.length) return showNoLevels()
   if (!selected && levels[0]) selectLevel(levels[0].id)
   else if (selected) selectLevel(selected)
+}
+
+function showNoLevels () {
+  selected = null
+  $('editTitle').textContent = 'No levels'
+  $('editForm').innerHTML = '<p class="hint">The vault door has no tumblers. Add one with New level, or reset all levels to the shipped seven.</p>'
+  $('pvMsgs').innerHTML = ''
+  $('atkResult').innerHTML = ''
 }
 
 function renderList () {
@@ -90,7 +104,7 @@ function renderList () {
     const row = document.createElement('div'); row.className = 'lvlrow'
     const b = document.createElement('button')
     b.className = 'lvl pick' + (selected === l.id ? ' active' : '')
-    b.innerHTML = `<span class="nm">${escapeHtml(l.name)}</span>`
+    b.textContent = l.name
     b.onclick = () => selectLevel(l.id)
     row.appendChild(b)
     box.appendChild(row)
@@ -150,6 +164,19 @@ function renderEditForm (l) {
     </fieldset>
 
     <fieldset>
+      <legend>Prompt budget</legend>
+      <div class="field"><label for="e_pb_max">Max prompts on this level (0 = unlimited)</label><input type="number" min="0" id="e_pb_max" value="${l.promptBudget.maxPrompts}"></div>
+    </fieldset>
+
+    <fieldset>
+      <legend>Memory</legend>
+      <div class="row">
+        <div class="field"><label for="e_mem_turns">Max turns remembered</label><input type="number" min="0" id="e_mem_turns" value="${l.memory.maxTurns}"></div>
+        <div class="field"><label for="e_mem_tokens">Max context tokens</label><input type="number" min="1" id="e_mem_tokens" value="${l.memory.maxContextTokens}"></div>
+      </div>
+    </fieldset>
+
+    <fieldset>
       <legend>Guess validation (the win condition)</legend>
       <div class="row">
         <div class="field"><label>Match mode</label>
@@ -161,18 +188,115 @@ function renderEditForm (l) {
       </div>
     </fieldset>
 
-    <div style="display:flex;gap:8px;flex-wrap:wrap">
+    <div class="level-actions">
       <button id="saveBtn" class="btn">Save changes</button>
       <button id="resetLvlBtn" class="btn ghost">Reset to default</button>
       <button id="dupBtn" class="btn ghost">Duplicate</button>
-      <button id="delBtn" class="btn ghost" style="margin-left:auto;color:var(--bad)">Delete</button>
+      <button id="delBtn" class="btn ghost danger">Delete</button>
+    </div>
+    <div class="export-strip" role="group" aria-labelledby="exportLbl">
+      <span id="exportLbl" class="strip-label">Export</span>
+      <div class="chk chk-inline"><input type="checkbox" id="e_include_pw" ${includePassword ? 'checked' : ''}><label for="e_include_pw">Include password</label></div>
+      <button id="exportBtn" class="btn ghost">Download .md</button>
+      <button id="copyBtn" class="btn ghost">Copy</button>
     </div>`
 
   $('saveBtn').onclick = saveLevel
   $('resetLvlBtn').onclick = resetLevel
   $('dupBtn').onclick = duplicateLevel
   $('delBtn').onclick = deleteLevel
+  $('e_include_pw').onchange = () => { includePassword = $('e_include_pw').checked }
+  $('exportBtn').onclick = exportLevel
+  $('copyBtn').onclick = copyLevel
 }
+
+// ---- export ----
+function comparableLevel (l) {
+  return {
+    name: l.name,
+    order: Number(l.order),
+    password: l.password,
+    hint: l.hint || '',
+    systemPrompt: l.systemPrompt,
+    inputGuard: {
+      enabled: !!l.inputGuard.enabled,
+      blocklist: (l.inputGuard.blocklist || []).map(s => String(s).trim()).filter(Boolean),
+      onBlock: l.inputGuard.onBlock
+    },
+    outputGuard: {
+      enabled: !!l.outputGuard.enabled,
+      blockIfContainsPassword: !!l.outputGuard.blockIfContainsPassword,
+      fuzzy: !!l.outputGuard.fuzzy,
+      onBlock: l.outputGuard.onBlock
+    },
+    guardModelCheck: { enabled: !!l.guardModelCheck.enabled, prompt: l.guardModelCheck.prompt },
+    submitValidation: { mode: l.submitValidation.mode, maxGuessesPerMinute: Number(l.submitValidation.maxGuessesPerMinute) },
+    promptBudget: { maxPrompts: Number(l.promptBudget.maxPrompts) },
+    memory: { maxTurns: Number(l.memory.maxTurns), maxContextTokens: Number(l.memory.maxContextTokens) }
+  }
+}
+
+function isEdited (formLevel, saved) {
+  return JSON.stringify(comparableLevel(formLevel)) !== JSON.stringify(comparableLevel(saved))
+}
+
+function levelPosition (id) {
+  const ordered = [...levels].sort((a, b) => a.order - b.order)
+  return { position: ordered.findIndex(x => x.id === id) + 1, total: ordered.length }
+}
+
+function downloadMarkdown (text, filename) {
+  const blob = new Blob([text], { type: 'text/markdown;charset=utf-8' })
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = filename
+  document.body.appendChild(a)
+  a.click()
+  a.remove()
+  URL.revokeObjectURL(url)
+}
+
+function exportOptionsFor (saved) {
+  const formLevel = formToLevel(saved)
+  const { position, total } = levelPosition(saved.id)
+  return {
+    formLevel,
+    opts: {
+      includePassword,
+      position,
+      total,
+      runtime,
+      generatedAt: new Date(),
+      edited: isEdited(formLevel, saved)
+    }
+  }
+}
+
+function exportLevel () {
+  const saved = levels.find(x => x.id === selected)
+  if (!saved) return
+  const { formLevel, opts } = exportOptionsFor(saved)
+  downloadMarkdown(levelToMarkdown(formLevel, opts), exportFileName(formLevel, { includePassword }))
+}
+
+async function copyLevel () {
+  const saved = levels.find(x => x.id === selected)
+  if (!saved) return
+  const { formLevel, opts } = exportOptionsFor(saved)
+  try {
+    await navigator.clipboard.writeText(levelToMarkdown(formLevel, opts))
+    toast('Copied')
+  } catch (err) {
+    toast(err.message || 'copy failed', 'bad')
+  }
+}
+
+function exportAllLevels () {
+  const md = levelsToMarkdown(levels, { includePassword, runtime, generatedAt: new Date() })
+  downloadMarkdown(md, allLevelsFileName(new Date()))
+}
+$('exportAllBtn').onclick = exportAllLevels
 
 function formToLevel (l) {
   const bl = $('e_ig_bl').value.split(',').map(s => s.trim()).filter(Boolean)
@@ -186,7 +310,9 @@ function formToLevel (l) {
     inputGuard: { enabled: $('e_ig_en').checked, blocklist: bl, onBlock: $('e_ig_msg').value },
     outputGuard: { enabled: $('e_og_en').checked, blockIfContainsPassword: $('e_og_contains').checked, fuzzy: $('e_og_fuzzy').checked, onBlock: $('e_og_msg').value },
     guardModelCheck: { enabled: $('e_gm_en').checked, prompt: $('e_gm_prompt').value },
-    submitValidation: { mode: $('e_sv_mode').value, maxGuessesPerMinute: Number($('e_sv_rate').value) }
+    submitValidation: { mode: $('e_sv_mode').value, maxGuessesPerMinute: $('e_sv_rate').value },
+    promptBudget: { maxPrompts: $('e_pb_max').value },
+    memory: { maxTurns: $('e_mem_turns').value, maxContextTokens: $('e_mem_tokens').value }
   }
 }
 
@@ -253,7 +379,7 @@ $('atkBtn').onclick = async () => {
   try {
     const r = await api('/api/admin/preview', { method: 'POST', body: JSON.stringify({ levelId: selected, message }) })
     renderAttack(r)
-  } catch { $('atkResult').innerHTML = '<p class="hint" style="color:var(--bad)">error</p>' }
+  } catch { $('atkResult').innerHTML = '<p class="hint error">error</p>' }
   $('atkBtn').disabled = false
 }
 
@@ -333,8 +459,8 @@ async function loadLogs () {
   box.innerHTML = r.logs.map(e => {
     const time = new Date(e.ts).toLocaleTimeString()
     let desc
-    if (e.kind === 'guess') desc = `guess on ${e.levelId} — ${e.correct ? '✅ correct' : '❌ wrong'}`
-    else desc = `chat on ${e.levelId}${e.admin ? ' (admin)' : ''} — ${e.blockedAt ? '🛑 blocked at ' + e.blockedAt : '✓ passed'}`
+    if (e.kind === 'guess') desc = `guess on ${e.levelId} — ${e.correct ? 'correct' : 'wrong'}`
+    else desc = `chat on ${e.levelId}${e.admin ? ' (admin)' : ''} — ${e.blockedAt === 'budget' ? 'refused: prompt budget spent' : e.blockedAt ? 'blocked at ' + e.blockedAt : 'passed'}`
     return `<div class="stage" style="padding:8px 12px"><span class="tag">${time}</span> ${escapeHtml(desc)}</div>`
   }).join('')
 }

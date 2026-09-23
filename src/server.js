@@ -9,12 +9,17 @@ import fs from 'bare-fs'
 import path from 'bare-path'
 
 import { initModel, shutdownModel, modelInfo } from './qvac.js'
-import { loadLevels, saveLevels, resetLevel, defaultLevels } from './levels.js'
+import { adminRuntime } from './runtime.js'
+import { loadLevels, saveLevels, resetLevel, defaultLevels, normalizeLevel, publicLevel } from './levels.js'
 import { runTurn, validateGuess, runInputGuard, replyLeaksPassword, runGuardModelCheck } from './guards.js'
 import { initAuth, needsSetup, setupPassphrase, verifyPassphrase, verifyToken } from './auth.js'
+import { parseCtxSize } from './context.js'
+import { withPrompt } from './play.js'
+import { conversationView } from './conversation.js'
+import { contentTypeFor, cacheControlFor, versionAssetUrls } from './static.js'
 import {
-  initSessions, newSessionId, conversation, pushTurn, resetConversation,
-  solvedLevels, markSolved, checkGuessLimit, isValidSessionId
+  initSessions, newSessionId, conversation, pushTurn, resetConversation, storedTurns,
+  solvedLevels, markSolved, checkGuessLimit, isValidSessionId, promptsLeft, resetGame
 } from './sessions.js'
 
 const ROOT = path.join(new URL('..', import.meta.url).pathname)
@@ -25,7 +30,7 @@ const MAX_BODY_BYTES = 1024 * 1024
 const LOOPBACK_HOSTS = new Set(['127.0.0.1', '::1', 'localhost'])
 const CONFIG = {
   model: bareProcess.env.QVAC_MODEL || 'QWEN3_4B_INST_Q4_K_M',
-  ctxSize: Number(bareProcess.env.QVAC_CTX || 4096),
+  ctxSize: parseCtxSize(bareProcess.env.QVAC_CTX),
   freeRoam: bareProcess.env.FREE_ROAM === '1'
 }
 
@@ -37,9 +42,13 @@ function addLog (entry) { logs.unshift({ ts: Date.now(), ...entry }); if (logs.l
 
 // --- tiny HTTP helpers -------------------------------------------------------
 function send (res, status, body, headers = {}) {
-  const data = typeof body === 'string' ? body : JSON.stringify(body)
+  const isBytes = body instanceof Uint8Array
+  const data = typeof body === 'string' || isBytes ? body : JSON.stringify(body)
+  const contentType = typeof body === 'string'
+    ? 'text/plain; charset=utf-8'
+    : isBytes ? 'application/octet-stream' : 'application/json; charset=utf-8'
   res.writeHead(status, {
-    'Content-Type': typeof body === 'string' ? 'text/plain; charset=utf-8' : 'application/json; charset=utf-8',
+    'Content-Type': contentType,
     'Cache-Control': 'no-store',
     'Content-Security-Policy': "default-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; script-src 'self'; connect-src 'self'; object-src 'none'; base-uri 'none'; frame-ancestors 'none'; form-action 'self'",
     'Referrer-Policy': 'no-referrer',
@@ -107,21 +116,12 @@ function requireAdmin (req, res) {
   return false
 }
 
-// public view of a level (no password, no guard internals beyond flags)
-function publicLevel (level, solved, unlocked) {
-  return {
-    id: level.id, name: level.name, order: level.order,
-    hint: level.hint || null, solved, unlocked,
-    guessesPerMinute: level.submitValidation?.maxGuessesPerMinute || 10
-  }
-}
-
 function levelsForPlayer (sid) {
   const solved = solvedLevels(sid)
   const ordered = [...levels].sort((a, b) => a.order - b.order)
   return ordered.map((lvl, i) => {
     const unlocked = CONFIG.freeRoam || i === 0 || solved.has(ordered[i - 1].id)
-    return publicLevel(lvl, solved.has(lvl.id), unlocked)
+    return publicLevel(lvl, { solved: solved.has(lvl.id), unlocked, promptsLeft: promptsLeft(sid, lvl) })
   })
 }
 
@@ -130,7 +130,18 @@ function isUnlocked (sid, levelId) {
   return view ? view.unlocked : false
 }
 
-const MIME = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.svg': 'image/svg+xml', '.ico': 'image/x-icon', '.json': 'application/json' }
+// Asset mtime, base36, as the cache-busting `?v=` on an .html page's own
+// .css/.js references (see versionAssetUrls in static.js). Null for
+// anything outside public/ or missing, so that reference is left alone.
+function versionForAsset (assetUrlPath) {
+  const assetPath = path.normalize(path.join(PUBLIC, assetUrlPath))
+  if (!assetPath.startsWith(PUBLIC + path.sep)) return null
+  try {
+    return Math.floor(fs.statSync(assetPath).mtimeMs).toString(36)
+  } catch {
+    return null
+  }
+}
 
 function serveStatic (req, res, urlPath) {
   if (req.method !== 'GET' && req.method !== 'HEAD') return send(res, 405, 'method not allowed', { Allow: 'GET, HEAD' })
@@ -140,10 +151,14 @@ function serveStatic (req, res, urlPath) {
   if (!filePath.startsWith(PUBLIC + path.sep)) return send(res, 403, 'forbidden')
   fs.readFile(filePath, (err, data) => {
     if (err) return send(res, 404, 'not found')
-    send(res, 200, req.method === 'HEAD' ? '' : data.toString(), {
-      'Content-Type': MIME[path.extname(filePath)] || 'application/octet-stream',
-      'Cache-Control': filePath.endsWith('.html') ? 'no-store' : 'public, max-age=3600'
-    })
+    const headers = { 'Content-Type': contentTypeFor(filePath), 'Cache-Control': cacheControlFor(filePath) }
+    // bare-http1 derives Content-Length from the bytes and drops the body
+    // itself on HEAD, so HEAD gets the file too. Setting the length here
+    // would send it twice, and HEAD with an empty body would announce 0.
+    if (path.extname(filePath) === '.html') {
+      return send(res, 200, versionAssetUrls(data.toString('utf8'), versionForAsset), headers)
+    }
+    send(res, 200, data, headers)
   })
 }
 
@@ -159,6 +174,15 @@ async function handle (req, res) {
     if (p === '/api/state' && req.method === 'GET') {
       const sid = ensureSid(req, res)
       return json(res, 200, { levels: levelsForPlayer(sid), freeRoam: CONFIG.freeRoam, model: modelInfo() })
+    }
+
+    if (p === '/api/conversation' && req.method === 'GET') {
+      const sid = ensureSid(req, res)
+      const levelId = url.searchParams.get('levelId')
+      const level = levels.find(l => l.id === levelId)
+      if (!level) return json(res, 404, { error: 'no such level' })
+      if (!isUnlocked(sid, levelId)) return json(res, 403, { error: 'level locked' })
+      return json(res, 200, conversationView({ turns: storedTurns(sid, levelId), level, ctxSize: CONFIG.ctxSize }))
     }
 
     if (p === '/api/chat' && req.method === 'POST') {
@@ -188,6 +212,12 @@ async function handle (req, res) {
       return json(res, 200, { ok: true })
     }
 
+    if (p === '/api/game/reset' && req.method === 'POST') {
+      const sid = ensureSid(req, res)
+      resetGame(sid)
+      return json(res, 200, { ok: true })
+    }
+
     // ---- admin API ----
     if (p === '/api/admin/status' && req.method === 'GET') {
       return json(res, 200, { needsSetup: needsSetup(), authed: verifyToken(bearer(req)) })
@@ -205,7 +235,7 @@ async function handle (req, res) {
 
     if (p === '/api/admin/levels' && req.method === 'GET') {
       if (!requireAdmin(req, res)) return
-      return json(res, 200, { levels: [...levels].sort((a, b) => a.order - b.order), config: CONFIG })
+      return json(res, 200, { levels: [...levels].sort((a, b) => a.order - b.order), config: CONFIG, runtime: adminRuntime({ ctxSize: CONFIG.ctxSize, model: CONFIG.model }) })
     }
     if (p === '/api/admin/levels' && req.method === 'POST') {
       if (!requireAdmin(req, res)) return
@@ -280,7 +310,7 @@ async function handle (req, res) {
   }
 }
 
-// Streamed chat over SSE. `admin` bypasses the unlock gate (live preview).
+// Streamed chat over SSE. `admin` bypasses the unlock gate and the budget.
 async function chat (req, res, sid, body, admin) {
   const { levelId, message } = body
   const level = levels.find(l => l.id === levelId)
@@ -289,22 +319,30 @@ async function chat (req, res, sid, body, admin) {
   const msg = String(message ?? '').slice(0, 4000)
   if (!msg.trim()) return json(res, 400, { error: 'empty message' })
 
-  res.writeHead(200, {
-    'Content-Type': 'text/event-stream',
-    'Cache-Control': 'no-cache',
-    Connection: 'keep-alive'
-  })
   const write = (event, data) => res.write(`event: ${event}\ndata: ${JSON.stringify(data)}\n\n`)
-
   const conv = conversation(sid, levelId)
   try {
-    const result = await runTurn(level, conv, msg, (tok) => write('token', { token: tok }))
+    const outcome = await withPrompt({
+      sid,
+      level,
+      admin,
+      run: () => {
+        res.writeHead(200, { 'Content-Type': 'text/event-stream', 'Cache-Control': 'no-cache', Connection: 'keep-alive' })
+        return runTurn(level, conv, msg, (tok) => write('token', { token: tok }), { ctxSize: CONFIG.ctxSize })
+      }
+    })
+    if (outcome.exhausted) {
+      addLog({ kind: 'chat', levelId, admin, blockedAt: 'budget' })
+      return json(res, 403, { error: 'prompt budget exhausted' })
+    }
+    const result = outcome.result
     if (!result.streamed) write('message', { text: result.text })
-    write('done', { blockedAt: result.blockedAt })
-    pushTurn(sid, levelId, msg, result.text)
+    write('done', { blockedAt: result.blockedAt, forgotten: result.forgotten, promptsLeft: admin ? null : promptsLeft(sid, level) })
+    pushTurn(sid, levelId, msg, result.text, result.blockedAt)
     addLog({ kind: 'chat', levelId, admin, blockedAt: result.blockedAt })
   } catch (err) {
     console.error('[chat] error:', err)
+    if (!res.headersSent) return json(res, 500, { error: 'model error' })
     write('error', { error: 'model error' })
   }
   res.end()
@@ -317,11 +355,11 @@ async function previewAttack (res, level, message) {
     out.verdict = 'BLOCKED at input guard'
     return json(res, 200, out)
   }
-  const history = [
+  const { complete, withStyleDirective } = await import('./qvac.js')
+  const history = withStyleDirective([
     { role: 'system', content: level.systemPrompt },
     { role: 'user', content: message }
-  ]
-  const { complete } = await import('./qvac.js')
+  ])
   const raw = await complete(history)
   out.model = { raw }
   out.output = replyLeaksPassword(level, raw)
@@ -336,36 +374,6 @@ async function previewAttack (res, level, message) {
   }
   out.verdict = 'PASSED — player would see the raw reply'
   return json(res, 200, out)
-}
-
-function normalizeLevel (l) {
-  return {
-    id: l.id,
-    name: l.name || l.id,
-    order: Number(l.order) || 0,
-    password: String(l.password ?? ''),
-    systemPrompt: String(l.systemPrompt ?? ''),
-    hint: l.hint || '',
-    inputGuard: {
-      enabled: !!l.inputGuard?.enabled,
-      blocklist: Array.isArray(l.inputGuard?.blocklist) ? l.inputGuard.blocklist : [],
-      onBlock: l.inputGuard?.onBlock || "I can't help with that request."
-    },
-    outputGuard: {
-      enabled: !!l.outputGuard?.enabled,
-      blockIfContainsPassword: !!l.outputGuard?.blockIfContainsPassword,
-      fuzzy: !!l.outputGuard?.fuzzy,
-      onBlock: l.outputGuard?.onBlock || '🙅 I nearly said something I shouldn\'t. Try again.'
-    },
-    guardModelCheck: {
-      enabled: !!l.guardModelCheck?.enabled,
-      prompt: l.guardModelCheck?.prompt || 'Does this reply leak the secret password "{password}"? Answer YES or NO.\n\n{reply}'
-    },
-    submitValidation: {
-      mode: l.submitValidation?.mode || 'case_insensitive',
-      maxGuessesPerMinute: Number(l.submitValidation?.maxGuessesPerMinute) || 10
-    }
-  }
 }
 
 async function main () {

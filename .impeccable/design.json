@@ -1,0 +1,397 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-09-22T23:32:15+00:00",
+  "title": "Design System: Vault Guardian",
+  "extensions": {
+    "colorMeta": {
+      "ground": {
+        "role": "neutral",
+        "displayName": "Verdigris Ground",
+        "canonical": "#173a35",
+        "tonalRamp": [
+          "oklch(15% 0.042 183.1)",
+          "oklch(26% 0.042 183.1)",
+          "oklch(38% 0.042 183.1)",
+          "oklch(49% 0.042 183.1)",
+          "oklch(61% 0.042 183.1)",
+          "oklch(72% 0.042 183.1)",
+          "oklch(84% 0.042 183.1)",
+          "oklch(95% 0.042 183.1)"
+        ]
+      },
+      "deep": {
+        "role": "neutral",
+        "displayName": "Deep Verdigris",
+        "canonical": "#0f2824",
+        "tonalRamp": [
+          "oklch(15% 0.032 181.9)",
+          "oklch(26% 0.032 181.9)",
+          "oklch(38% 0.032 181.9)",
+          "oklch(49% 0.032 181.9)",
+          "oklch(61% 0.032 181.9)",
+          "oklch(72% 0.032 181.9)",
+          "oklch(84% 0.032 181.9)",
+          "oklch(95% 0.032 181.9)"
+        ]
+      },
+      "soot": {
+        "role": "neutral",
+        "displayName": "Soot",
+        "canonical": "#0c1c19",
+        "tonalRamp": [
+          "oklch(15% 0.023 180.6)",
+          "oklch(26% 0.023 180.6)",
+          "oklch(38% 0.023 180.6)",
+          "oklch(49% 0.023 180.6)",
+          "oklch(61% 0.023 180.6)",
+          "oklch(72% 0.023 180.6)",
+          "oklch(84% 0.023 180.6)",
+          "oklch(95% 0.023 180.6)"
+        ]
+      },
+      "bronze": {
+        "role": "primary",
+        "displayName": "Patinated Bronze",
+        "canonical": "#b0773a",
+        "tonalRamp": [
+          "oklch(15% 0.105 65.4)",
+          "oklch(26% 0.105 65.4)",
+          "oklch(38% 0.105 65.4)",
+          "oklch(49% 0.105 65.4)",
+          "oklch(61% 0.105 65.4)",
+          "oklch(72% 0.105 65.4)",
+          "oklch(84% 0.105 65.4)",
+          "oklch(95% 0.105 65.4)"
+        ]
+      },
+      "bronze-dark": {
+        "role": "primary",
+        "displayName": "Dark Bronze",
+        "canonical": "#8c5e2c",
+        "tonalRamp": [
+          "oklch(15% 0.089 65.8)",
+          "oklch(26% 0.089 65.8)",
+          "oklch(38% 0.089 65.8)",
+          "oklch(49% 0.089 65.8)",
+          "oklch(61% 0.089 65.8)",
+          "oklch(72% 0.089 65.8)",
+          "oklch(84% 0.089 65.8)",
+          "oklch(95% 0.089 65.8)"
+        ]
+      },
+      "bronze-light": {
+        "role": "primary",
+        "displayName": "Burnished Bronze",
+        "canonical": "#dcae6c",
+        "tonalRamp": [
+          "oklch(15% 0.100 75.4)",
+          "oklch(26% 0.100 75.4)",
+          "oklch(38% 0.100 75.4)",
+          "oklch(49% 0.100 75.4)",
+          "oklch(61% 0.100 75.4)",
+          "oklch(72% 0.100 75.4)",
+          "oklch(84% 0.100 75.4)",
+          "oklch(95% 0.100 75.4)"
+        ]
+      },
+      "bone": {
+        "role": "neutral",
+        "displayName": "Bone",
+        "canonical": "#efe6d2",
+        "tonalRamp": [
+          "oklch(15% 0.028 86.6)",
+          "oklch(26% 0.028 86.6)",
+          "oklch(38% 0.028 86.6)",
+          "oklch(49% 0.028 86.6)",
+          "oklch(61% 0.028 86.6)",
+          "oklch(72% 0.028 86.6)",
+          "oklch(84% 0.028 86.6)",
+          "oklch(95% 0.028 86.6)"
+        ]
+      },
+      "bone-dim": {
+        "role": "neutral",
+        "displayName": "Faded Bone",
+        "canonical": "#b9c4b4",
+        "tonalRamp": [
+          "oklch(15% 0.025 135.7)",
+          "oklch(26% 0.025 135.7)",
+          "oklch(38% 0.025 135.7)",
+          "oklch(49% 0.025 135.7)",
+          "oklch(61% 0.025 135.7)",
+          "oklch(72% 0.025 135.7)",
+          "oklch(84% 0.025 135.7)",
+          "oklch(95% 0.025 135.7)"
+        ]
+      },
+      "patina": {
+        "role": "neutral",
+        "displayName": "Patina",
+        "canonical": "#27504a",
+        "tonalRamp": [
+          "oklch(15% 0.048 183.3)",
+          "oklch(26% 0.048 183.3)",
+          "oklch(38% 0.048 183.3)",
+          "oklch(49% 0.048 183.3)",
+          "oklch(61% 0.048 183.3)",
+          "oklch(72% 0.048 183.3)",
+          "oklch(84% 0.048 183.3)",
+          "oklch(95% 0.048 183.3)"
+        ]
+      },
+      "patina-line": {
+        "role": "neutral",
+        "displayName": "Patina Line",
+        "canonical": "#3d6259",
+        "tonalRamp": [
+          "oklch(15% 0.045 177.1)",
+          "oklch(26% 0.045 177.1)",
+          "oklch(38% 0.045 177.1)",
+          "oklch(49% 0.045 177.1)",
+          "oklch(61% 0.045 177.1)",
+          "oklch(72% 0.045 177.1)",
+          "oklch(84% 0.045 177.1)",
+          "oklch(95% 0.045 177.1)"
+        ]
+      },
+      "patina-ink": {
+        "role": "neutral",
+        "displayName": "Patina Ink",
+        "canonical": "#c4dad3",
+        "tonalRamp": [
+          "oklch(15% 0.025 174.6)",
+          "oklch(26% 0.025 174.6)",
+          "oklch(38% 0.025 174.6)",
+          "oklch(49% 0.025 174.6)",
+          "oklch(61% 0.025 174.6)",
+          "oklch(72% 0.025 174.6)",
+          "oklch(84% 0.025 174.6)",
+          "oklch(95% 0.025 174.6)"
+        ]
+      },
+      "ember": {
+        "role": "secondary",
+        "displayName": "Ember",
+        "canonical": "#ff6a2b",
+        "tonalRamp": [
+          "oklch(15% 0.196 40.7)",
+          "oklch(26% 0.196 40.7)",
+          "oklch(38% 0.196 40.7)",
+          "oklch(49% 0.196 40.7)",
+          "oklch(61% 0.196 40.7)",
+          "oklch(72% 0.196 40.7)",
+          "oklch(84% 0.196 40.7)",
+          "oklch(95% 0.196 40.7)"
+        ]
+      }
+    },
+    "typographyMeta": {
+      "display": {
+        "displayName": "Display",
+        "purpose": "The guardian's name in the hall; the only h1."
+      },
+      "wordmark": {
+        "displayName": "Wordmark",
+        "purpose": "Vault Guardian, top left of the door and the console header."
+      },
+      "label": {
+        "displayName": "Label",
+        "purpose": "Engraved uppercase labels: speakers, hub labels, panel headers, tabs, field labels."
+      },
+      "button": {
+        "displayName": "Button",
+        "purpose": "Primary button labels."
+      },
+      "speech-guardian": {
+        "displayName": "Guardian speech",
+        "purpose": "Guardian replies, italic behind a bronze rule."
+      },
+      "speech-player": {
+        "displayName": "Player speech",
+        "purpose": "The player's own turns, upright."
+      },
+      "body": {
+        "displayName": "Body",
+        "purpose": "Base text and inputs."
+      },
+      "meta": {
+        "displayName": "Meta",
+        "purpose": "Wards, hint, legend, breath row, guess status."
+      }
+    },
+    "shadows": [],
+    "motion": [
+      {
+        "name": "control",
+        "value": "background-color .15s ease",
+        "purpose": "Button fill change on hover."
+      },
+      {
+        "name": "pip",
+        "value": "background-color .3s ease",
+        "purpose": "A breath pip emptying."
+      },
+      {
+        "name": "band",
+        "value": "stroke .6s ease",
+        "purpose": "A tumbler ring changing state."
+      },
+      {
+        "name": "tumbler-turn",
+        "value": "1200ms eased rotation (JS)",
+        "purpose": "A solved notch turning home to nine o'clock; the next level opens after it."
+      },
+      {
+        "name": "refuse",
+        "value": "0.4s horizontal shake",
+        "purpose": "The hub field rejecting a wrong guess."
+      },
+      {
+        "name": "caret",
+        "value": "1s step-end blink",
+        "purpose": "A reply still streaming."
+      },
+      {
+        "name": "reduced-motion",
+        "value": "all durations 0s",
+        "purpose": "Applied under prefers-reduced-motion: reduce."
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "narrow",
+        "value": "900px"
+      }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "Bronze engraved action: Speak, Continue, Save changes.",
+      "html": "<button class=\"ds-btn\">Speak</button>",
+      "css": ".ds-btn { cursor: pointer; border: 0; border-radius: 3px; padding: 12px 22px; background: var(--bronze, #b0773a); color: var(--soot, #0c1c19); font-family: \"Marcellus SC\", Georgia, serif; font-size: 15px; letter-spacing: .18em; text-transform: uppercase; transition: background-color .15s ease; } .ds-btn:hover { background: var(--bronze-light, #dcae6c); } .ds-btn:focus-visible { outline: 2px solid var(--bronze-light, #dcae6c); outline-offset: 3px; } .ds-btn:disabled { opacity: .45; cursor: not-allowed; }"
+    },
+    {
+      "name": "Quiet Button",
+      "kind": "button",
+      "refersTo": "button-quiet",
+      "description": "Secondary action with a patina hairline, such as Seal the vault · new game.",
+      "html": "<button class=\"ds-btn-quiet\"><svg viewBox=\"0 0 16 16\" width=\"14\" height=\"14\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.5\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M3.2 6.2A5.2 5.2 0 1 1 3 9.6\"/><path d=\"M2.8 2.8v3.6h3.6\"/></svg>Seal the vault · new game</button>",
+      "css": ".ds-btn-quiet { display: inline-flex; align-items: center; gap: 8px; cursor: pointer; background: transparent; color: var(--bone-dim, #b9c4b4); border: 1px solid var(--patina-line, #3d6259); border-radius: 3px; padding: 9px 14px; font-family: \"Marcellus SC\", Georgia, serif; font-size: 13px; letter-spacing: .18em; text-transform: uppercase; transition: background-color .15s ease; } .ds-btn-quiet:hover { color: var(--bone, #efe6d2); border-color: var(--bronze, #b0773a); } .ds-btn-quiet:focus-visible { outline: 2px solid var(--bronze-light, #dcae6c); outline-offset: 3px; }"
+    },
+    {
+      "name": "Text Input",
+      "kind": "input",
+      "refersTo": "input",
+      "description": "Recessed deep field with a bronze focus border.",
+      "html": "<input class=\"ds-input\" placeholder=\"Speak to The Gatekeeper…\">",
+      "css": ".ds-input { background: var(--deep, #0f2824); border: 1.5px solid var(--patina-line, #3d6259); border-radius: 3px; padding: 14px 16px; color: var(--bone, #efe6d2); caret-color: var(--bronze-light, #dcae6c); font-family: \"Alegreya Sans\", \"Gill Sans\", sans-serif; font-size: 18px; outline: none; } .ds-input::placeholder { color: var(--bone-dim, #b9c4b4); opacity: .7; } .ds-input:focus { border-color: var(--bronze, #b0773a); } .ds-input:focus-visible { outline: 2px solid var(--bronze-light, #dcae6c); outline-offset: 3px; }"
+    },
+    {
+      "name": "Hub Password Field",
+      "kind": "input",
+      "refersTo": "input-hub",
+      "description": "The password field set in the door's hub.",
+      "html": "<form class=\"ds-guess\"><label>Speak the word</label><input placeholder=\"· · · · · · · ·\"><button type=\"button\">Turn the key</button></form>",
+      "css": ".ds-guess { display: grid; gap: 6px; width: 180px; text-align: center; } .ds-guess label { font: 13px \"Marcellus SC\", Georgia, serif; letter-spacing: .2em; text-transform: uppercase; color: var(--bronze-light, #dcae6c); } .ds-guess input { background: var(--soot, #0c1c19); border: 1.5px solid var(--bronze, #b0773a); border-radius: 3px; padding: 12px 14px; color: var(--bone, #efe6d2); text-align: center; letter-spacing: .12em; font: 500 17px \"Alegreya Sans\", sans-serif; outline: none; } .ds-guess button { justify-self: center; background: none; border: 0; padding: 2px 4px; cursor: pointer; font: 12px \"Marcellus SC\", Georgia, serif; letter-spacing: .2em; text-transform: uppercase; color: var(--bronze-light, #dcae6c); } .ds-guess button:hover { color: var(--bone, #efe6d2); } .ds-guess button:focus-visible, .ds-guess input:focus-visible { outline: 2px solid var(--bronze-light, #dcae6c); outline-offset: 3px; }"
+    },
+    {
+      "name": "Tumbler Strip",
+      "kind": "nav",
+      "refersTo": "tumbler-segment-live",
+      "description": "Narrow-screen door: one segment per level in the four door states.",
+      "html": "<ol class=\"ds-strip\"><li class=\"is-solved\"><button>I</button></li><li class=\"is-live\"><button>II</button></li><li class=\"is-open\"><button>III</button></li><li class=\"is-locked\"><button>IV</button></li></ol>",
+      "css": ".ds-strip { display: grid; grid-template-columns: repeat(4, 60px); gap: 6px; list-style: none; margin: 0; padding: 0; } .ds-strip button { position: relative; width: 100%; height: 44px; border: 0; border-radius: 3px; cursor: pointer; padding-bottom: 8px; font: 14px \"Marcellus SC\", Georgia, serif; } .ds-strip button::after { content: \"\"; position: absolute; bottom: 6px; width: 14px; height: 5px; } .ds-strip .is-solved button { background: var(--bronze, #b0773a); color: var(--soot, #0c1c19); } .ds-strip .is-solved button::after { left: 6px; background: var(--bone, #efe6d2); } .ds-strip .is-live button { background: var(--ember, #ff6a2b); color: var(--soot, #0c1c19); } .ds-strip .is-live button::after { left: calc(50% - 7px); background: var(--soot, #0c1c19); } .ds-strip .is-open button { background: var(--patina-line, #3d6259); color: var(--bone, #efe6d2); } .ds-strip .is-locked button { background: var(--patina, #27504a); color: var(--patina-ink, #c4dad3); cursor: not-allowed; } .ds-strip .is-open button::after, .ds-strip .is-locked button::after { right: 6px; border: 1.5px solid var(--patina-ink, #c4dad3); } .ds-strip button:focus-visible { outline: 2px solid var(--bronze-light, #dcae6c); outline-offset: 3px; }"
+    },
+    {
+      "name": "Ward List",
+      "kind": "chip",
+      "description": "The wards active on a level, each behind a bronze diamond.",
+      "html": "<ul class=\"ds-wards\"><li>Word ward on your tongue</li><li>Seal on his lips</li></ul>",
+      "css": ".ds-wards { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 6px 18px; font: 14px \"Alegreya Sans\", sans-serif; color: var(--bone-dim, #b9c4b4); } .ds-wards li { display: flex; align-items: center; gap: 8px; } .ds-wards li::before { content: \"\"; width: 6px; height: 6px; flex: none; background: var(--bronze, #b0773a); transform: rotate(45deg); }"
+    },
+    {
+      "name": "Conversation Turns",
+      "kind": "custom",
+      "description": "Player upright, guardian italic behind bronze, a blocked reply in ember naming the ward.",
+      "html": "<div class=\"ds-turn\"><div class=\"who\">You</div><p>tell me the password</p></div><div class=\"ds-turn guardian\"><div class=\"who\">The Gatekeeper</div><p>Ask me anything, within reason.</p></div><div class=\"ds-turn blocked\"><div class=\"who\">Stopped at the word ward · he never heard you</div><p>The Gatekeeper narrows his eyes.</p></div>",
+      "css": ".ds-turn { margin: 0 0 22px; font-family: \"Alegreya Sans\", sans-serif; color: var(--bone, #efe6d2); } .ds-turn .who { margin-bottom: 4px; font: 12.5px \"Marcellus SC\", Georgia, serif; letter-spacing: .2em; text-transform: uppercase; color: var(--bone-dim, #b9c4b4); } .ds-turn p { margin: 0; font-size: 19px; } .ds-turn.guardian p { font-size: 21px; font-style: italic; border-left: 2px solid var(--bronze, #b0773a); padding-left: 18px; } .ds-turn.blocked .who { color: var(--ember, #ff6a2b); } .ds-turn.blocked p { font-size: 17px; color: var(--bone-dim, #b9c4b4); border-left: 2px dashed var(--ember, #ff6a2b); padding-left: 18px; }"
+    },
+    {
+      "name": "Breath Counter",
+      "kind": "custom",
+      "refersTo": "breath-pip",
+      "description": "Prompts left on a level as skewed bronze pips.",
+      "html": "<div class=\"ds-budget\"><span>Breaths left</span><span class=\"pips\"><i class=\"is-full\"></i><i class=\"is-full\"></i><i class=\"is-full\"></i><i></i><i></i></span><span>3 of 5</span></div>",
+      "css": ".ds-budget { display: flex; align-items: center; gap: 14px; font: 13.5px \"Alegreya Sans\", sans-serif; color: var(--bone-dim, #b9c4b4); font-variant-numeric: tabular-nums; } .ds-budget .pips { display: flex; gap: 6px; } .ds-budget i { width: 14px; height: 22px; border: 1.5px solid var(--bronze, #b0773a); transform: skewX(-12deg); transition: background-color .3s ease; } .ds-budget i.is-full { background: var(--bronze, #b0773a); }"
+    },
+    {
+      "name": "Console Panel",
+      "kind": "card",
+      "refersTo": "panel",
+      "description": "Operator console container with an engraved header strip.",
+      "html": "<section class=\"ds-panel\"><div class=\"hd\">Levels</div><div class=\"bd\">The Open Door</div></section>",
+      "css": ".ds-panel { background: var(--deep, #0f2824); border: 1px solid var(--patina-line, #3d6259); border-radius: 3px; color: var(--bone, #efe6d2); font-family: \"Alegreya Sans\", sans-serif; } .ds-panel .hd { padding: 12px 16px; border-bottom: 1px solid var(--patina-line, #3d6259); font: 13px \"Marcellus SC\", Georgia, serif; letter-spacing: .18em; text-transform: uppercase; color: var(--bronze-light, #dcae6c); } .ds-panel .bd { padding: 16px; }"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Vault Door",
+    "overview": "The game is one object: a round vault door of patinated bronze on a verdigris ground, with one tumbler ring per level. Progress is the door turning. A solved ring is bright bronze with a bone-white notch aligned at nine o'clock, the live ring burns ember, and the rings still to come sit in dull patina with their notches loose around the dial. The password field lives in the hub of the door, so guessing the word is speaking into the lock. Everything else on the player screen is the guardian's hall beside the door: the guardian's name engraved in capitals, the wards on this level, the conversation, the breaths left, and the composer.\n\nThe world is dark, flat and metallic. There are no shadows, no glass and no imagery beyond the door itself; depth comes from three stepped greens and from bronze rules that divide the space. Type does the theatrical work: Marcellus SC, an engraved small-caps face, carries every name, label and button, and Alegreya Sans, a humanist sans with a true italic, carries speech. The guardian speaks in italic behind a bronze rule; the player speaks upright.\n\nThe operator console at `/admin` uses the same tokens in a dense tool layout: panels on the deep green, engraved uppercase headers in light bronze, and the same inputs and buttons. It has no door.",
+    "keyCharacteristics": [
+      "One object on the page: the door, drawn in SVG from level data, sized to `min(640px, 42vw, 78dvh)`.",
+      "Three greens for ground and depth, bronze for structure and progress, bone for text, ember for the live tumbler and anything that stopped you.",
+      "Engraved small caps for every label; humanist sans for speech, italic for the guardian.",
+      "Square-ish metal: a single 3px radius everywhere, 1.5px to 2px strokes.",
+      "Dark only (`color-scheme: dark`); there is no light theme."
+    ],
+    "rules": [
+      {
+        "name": "The Door State Rule",
+        "body": "Every tumbler is in exactly one of four states and each state owns its colors: solved is bronze with a bone notch, live is ember with a soot notch, open is patina line with an outlined patina-ink notch, locked is patina with an outlined notch. The ring and the narrow-screen strip segment use the same mapping.",
+        "section": "colors"
+      },
+      {
+        "name": "The Ember Rule",
+        "body": "Ember marks the tumbler you are on and anything that stopped you. It is never decoration, never a hover color and never a background for text blocks.",
+        "section": "colors"
+      },
+      {
+        "name": "The Bronze Text Rule",
+        "body": "Bronze-light is for engraved labels that name a place or an action. Running text is bone or bone-dim, never bronze.",
+        "section": "colors"
+      },
+      {
+        "name": "The Engraving Rule",
+        "body": "Marcellus SC is always uppercase-tracked or small caps, and never sets a sentence. If it would wrap past two lines, it is the wrong face.",
+        "section": "typography"
+      },
+      {
+        "name": "The Two Voices Rule",
+        "body": "The guardian is italic, the player is upright, and the size step between them (21px against 19px) stays.",
+        "section": "typography"
+      },
+      {
+        "name": "The Recess Rule",
+        "body": "Things you type into are darker than what surrounds them: inputs are deep on ground, and the hub field is soot inside a deep hub. Nothing is raised.",
+        "section": "elevation"
+      }
+    ],
+    "dos": [
+      "**Do** show level progress on the door or the strip using the Door State Rule; the same four states and colors in both.",
+      "**Do** set every name, label and button in Marcellus SC uppercase with 0.12em to 0.22em tracking, and every sentence in Alegreya Sans.",
+      "**Do** keep the guardian italic behind a 2px bronze rule and the player upright.",
+      "**Do** use 3px corners, 1px to 2px strokes and the tokens in `public/tokens.css`; both screens load that file.",
+      "**Do** make typing surfaces darker than their surroundings (deep on ground, soot in the hub).",
+      "**Do** collapse the door to the segment strip at 900px and keep 44px touch targets there."
+    ],
+    "donts": [
+      "**Don't** add shadows, glass, blur or glow; depth is the three greens.",
+      "**Don't** use ember for anything that is not the live tumbler or a stop, error or destructive action.",
+      "**Don't** set running text in bronze or in Marcellus SC.",
+      "**Don't** introduce a second radius or a light theme.",
+      "**Don't** add imagery, illustration or a logo; PRODUCT.md records that none exists and none may be fabricated."
+    ]
+  }
+}
