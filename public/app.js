@@ -38,10 +38,13 @@ const NO_ANSWER = 'The door did not answer. Try again.'
 // The server refunds the prompt whenever the model fails, before or during the reply.
 const MODEL_FAILED = 'The guardian lost his words. Your breath was returned.'
 const MODEL_FAILED_STATUS = 500
-// Desktop layout, and the small-door range where the password field leaves the hub for the hall.
+// Desktop layout, the small-door range where the password field leaves the hub for the hall,
+// and phones, which also show the field below the conversation.
 // These breakpoints also live in public/style.css; change both together.
 const DESKTOP_QUERY = '(min-width: 901px)'
+const PHONE_QUERY = '(max-width: 900px)'
 const SMALL_DOOR_QUERY = `${DESKTOP_QUERY} and ((width < 1219px) or (height < 656px))`
+const FIELD_BELOW_HALL_QUERY = `${PHONE_QUERY}, ${SMALL_DOOR_QUERY}`
 
 const WARD_LABELS = {
   input: 'Word ward on your tongue',
@@ -600,9 +603,11 @@ window.matchMedia(DESKTOP_QUERY).addEventListener('change', (e) => { if (e.match
 // On a small desktop door the password field sits in the hall with its label
 // hidden, so the placeholder names it; in the hub the visible label does.
 const movedGuessField = window.matchMedia(SMALL_DOOR_QUERY)
+const guessFieldBelowHall = window.matchMedia(FIELD_BELOW_HALL_QUERY)
 const HUB_GUESS_PLACEHOLDER = $('guessInput').placeholder
 const MOVED_GUESS_PLACEHOLDER = 'Speak the word…'
-// The field follows the hall in the DOM too, so reading and tab order match what is on screen.
+// Wherever the field shows below the conversation (phones, small desktop door) it follows the hall
+// in the DOM too, so reading and tab order match what is on screen.
 // Moving a focused element drops its focus, so the move waits until focus leaves the form.
 const placeGuessField = () => {
   const form = $('guessForm')
@@ -610,10 +615,11 @@ const placeGuessField = () => {
   $('guessInput').placeholder = moved ? MOVED_GUESS_PLACEHOLDER : HUB_GUESS_PLACEHOLDER
   form.querySelector('label').classList.toggle('sr-only', moved)
   if (form.contains(document.activeElement)) return
-  const anchor = document.querySelector(moved ? 'main.hall' : '.door')
+  const anchor = document.querySelector(guessFieldBelowHall.matches ? 'main.hall' : '.door')
   if (anchor.nextElementSibling !== form) anchor.after(form)
 }
 movedGuessField.addEventListener('change', placeGuessField)
+guessFieldBelowHall.addEventListener('change', placeGuessField)
 $('guessForm').addEventListener('focusout', (e) => { if (!$('guessForm').contains(e.relatedTarget)) placeGuessField() })
 placeGuessField()
 
