@@ -1,10 +1,27 @@
 # 🛡️ Vault Guardian
 
+> **This is a fork.** Vault Guardian was created by **[avaler0](https://github.com/avaler0)**, and the original project lives at **[avaler0/vaultGuardian](https://github.com/avaler0/vaultGuardian)**. This fork, maintained by [Bardin08](https://github.com/Bardin08), adds the changes listed in [What this fork changes](#what-this-fork-changes). It is not affiliated with or endorsed by the original author. For the original game, issues about it, and its author's plans, go to the upstream repository.
+
 A local-first, offline **prompt-injection game** in the style of [Lakera's Gandalf](https://gandalf.lakera.ai/baseline). A defender AI holds a secret password; you chat with it and try to trick it into leaking the password, then submit your guess to a server-side validator. Seven levels (L1–L7) of escalating defenses, all editable from an admin console.
 
 All AI inference runs **locally, in-process, fully offline** through [QVAC](https://qvac.tether.io) (`@qvac/sdk`) on the [Bare](https://bare.pears.com) runtime. No cloud, no external API calls, no accounts, no telemetry. The default model fits in about 4 GB RAM.
 
 > ⚠️ Educational sandbox — the "passwords" are game tokens, not real credentials.
+
+## What this fork changes
+
+Everything below the original release (`1b6b911`) was added in this fork:
+
+- **Prompt budget per level.** Each level allows a set number of messages (12 by default, 0 for unlimited). A message stopped by a guard still counts; a model error gives it back. Guessing keeps working after the budget runs out, and only New game refills it.
+- **New game.** Players can reset their own progress, budgets and conversations from the player screen.
+- **Context trimming.** History sent to the model is trimmed by turns and estimated tokens, with both limits set per level, so long conversations no longer overflow the model context.
+- **Conversation restored after a reload.** The page brings back the exchanges the player already saw, including which guard blocked a message.
+- **Redesigned interface.** The player screen is now a vault door with one tumbler per level, and the operator console shares its design tokens. Fonts are self-hosted, so the game stays fully offline. See `DESIGN.md` and `PRODUCT.md`.
+- **Markdown replies.** Guardian replies render emphasis, bold, paragraphs and lists. The output guard also checks each reply with the markdown markers removed, so formatting cannot hide a leaked password.
+- **Less repetitive guardian.** Chat uses explicit sampling settings from the Qwen3 model card and a short style directive. The leak classifier runs with fixed, repeatable settings.
+- **Level export.** The operator console exports one level, or all levels, as a markdown document describing the system prompt, every guard and what the server adds at runtime. The password is left out unless the operator chooses to include it.
+- **Operational fixes.** Script and style URLs are versioned so browsers never mix old and new files after an update, and the layout no longer breaks when a browser extension injects elements into the page.
+- **Tests.** A shared test harness with suites for every module (`npm test`).
 
 ## Requirements
 
@@ -97,7 +114,8 @@ restores the shipped presets.
 
 ## Admin console
 
-- **Level CRUD** — edit every field, create, duplicate, reorder, enable/disable, delete, reset.
+- **Level CRUD** — edit every field, create, duplicate, reorder, delete, reset.
+- **Export** — download or copy a level, or all levels, as a markdown account of the setup; the password is redacted unless included on purpose.
 - **Test-attack panel** — paste a candidate prompt and watch each stage's verdict (input guard → raw model output → output guard → guard-model check). The core tuning tool.
 - **Preview chat** — chat against any level as admin (bypasses the unlock gate).
 - **Logs** — optional local-only attempt log with a clear button.
@@ -148,3 +166,7 @@ const { loadModel, completion, unloadModel } = plugins([llmPlugin])
 This follows the official `@qvac/sdk` Bare quickstart. For longer sessions you can
 lower `QVAC_CTX` or enable TurboQuant KV-cache compression rather than raising the
 RAM ceiling.
+
+## Credits and license
+
+Vault Guardian was designed and first released by [avaler0](https://github.com/avaler0) in [avaler0/vaultGuardian](https://github.com/avaler0/vaultGuardian). This fork keeps the original author's work and history and builds on it. The upstream repository has no LICENSE file; its `package.json` declares `"license": "ISC"`, and this fork keeps that declaration unchanged. Questions about licensing of the original code belong with the original author.
