@@ -427,6 +427,9 @@ async function selectLevel (id, { force = false } = {}) {
   if (conversation) {
     restoreTurns(level, conversation.turns)
     forgottenSeen.set(id, conversation.forgotten)
+    if (conversation.forgotten > 0) {
+      addNote(`The guardian has forgotten your first ${conversation.forgotten} ${conversation.forgotten === 1 ? 'exchange' : 'exchanges'}.`)
+    }
   } else {
     addNote(NO_ANSWER)
   }

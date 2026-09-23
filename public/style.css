@@ -102,7 +102,6 @@ body { overflow: hidden; }
 .reply li::before { content: ""; position: absolute; left: -1em; top: .6em; width: 6px; height: 6px; background: var(--bronze); transform: rotate(45deg); }
 .turn--blocked .who { color: var(--ember); }
 .turn--blocked p, .turn--blocked .reply { border-left: 2px dashed var(--ember); font-size: 17px; font-style: normal; color: var(--bone-dim); }
-.turn--pending > p::after,
 .turn--pending .reply:empty::after,
 .turn--pending .reply > p:last-child::after,
 .turn--pending .reply > ul:last-child > li:last-child::after { content: "▍"; font-style: normal; color: var(--bronze-light); animation: blink 1s step-end infinite; }
