@@ -19,7 +19,8 @@ const SUITES = [
   './budget-guess.test.js',
   './markdown.test.js',
   './markdown-guard.test.js',
-  './conversation.test.js'
+  './conversation.test.js',
+  './sampling.test.js'
 ]
 
 for (const suite of SUITES) await import(suite)

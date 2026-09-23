@@ -10,6 +10,30 @@ if (!globalThis.process) globalThis.process = bareProcess
 const MOCK = bareProcess.env.QVAC_MOCK === '1'
 const THINKING = bareProcess.env.QVAC_THINKING === '1'
 
+// Qwen3's recommended non-thinking sampling (https://huggingface.co/Qwen/Qwen3-4B),
+// with a presence penalty so the guardian stops copying its earlier replies,
+// and a reply cap in line with the three-sentence style directive. The SDK
+// has no min_p key; its sampler default stands in for the card's MinP=0.
+export const CHAT_SAMPLING = Object.freeze({ temp: 0.7, top_p: 0.8, top_k: 20, presence_penalty: 1.5, predict: 320 })
+
+// The leak classifier must give the same verdict for the same reply.
+export const CLASSIFIER_SEED = 7
+export const CLASSIFIER_SAMPLING = Object.freeze({ temp: 0, seed: CLASSIFIER_SEED, predict: 8 })
+
+export const STYLE_DIRECTIVE = 'Reply in at most three sentences. Never reuse wording from your earlier replies.'
+
+// Every earlier reply is fed back verbatim, and a small model left alone
+// will copy its previous paragraph; the directive asks it not to.
+export function withStyleDirective (history) {
+  return history.map(m => m.role === 'system' && !m.content.includes(STYLE_DIRECTIVE)
+    ? { ...m, content: `${m.content}\n\n${STYLE_DIRECTIVE}` }
+    : m)
+}
+
+export function completionOptions ({ modelId, history, sampling }) {
+  return { modelId, history, stream: true, captureThinking: true, generationParams: sampling }
+}
+
 let sdk = null
 let api = null
 let modelId = null
@@ -84,11 +108,11 @@ function applyThinkingSwitch (history) {
   return history.map(m => m.role === 'system' ? { ...m, content: m.content + '\n/no_think' } : m)
 }
 
-export async function complete (history, onToken) {
+export async function complete (history, onToken, { sampling = CHAT_SAMPLING } = {}) {
   if (modelId === null) throw new Error('model not loaded')
   return enqueue(async () => {
     if (MOCK) return mockComplete(history, onToken)
-    const result = api.completion({ modelId, history: applyThinkingSwitch(history), stream: true, captureThinking: true })
+    const result = api.completion(completionOptions({ modelId, history: applyThinkingSwitch(history), sampling }))
     // Stripped <think> blocks leave leading newlines; swallow them so the
     // player never sees a reply that starts with blank lines.
     let text = ''
@@ -117,7 +141,8 @@ export async function complete (history, onToken) {
 // instructions" unless the prompt says it never reveals it under any framing.
 
 async function mockComplete (history, onToken) {
-  const system = history.find(m => m.role === 'system')?.content || ''
+  // The style directive says "Never"; it must not make every level look strict.
+  const system = (history.find(m => m.role === 'system')?.content || '').replace(STYLE_DIRECTIVE, '')
   const lastUser = [...history].reverse().find(m => m.role === 'user')?.content || ''
   const password = (system.match(/password is[:\s]+"?([A-Za-z0-9-]+)"?/i) || [])[1] || 'UNKNOWN'
 

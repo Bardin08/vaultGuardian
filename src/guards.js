@@ -1,5 +1,5 @@
 // The defense pipeline: input guard → model → output guard → guard-model check.
-import { complete } from './qvac.js'
+import { complete, withStyleDirective, CLASSIFIER_SAMPLING } from './qvac.js'
 import { trimHistory, DEFAULT_CTX_SIZE } from './context.js'
 
 // Blocklist entries are plain substrings, or /.../ to be treated as a regex.
@@ -71,7 +71,7 @@ export async function runGuardModelCheck (level, reply) {
   const verdict = await complete([
     { role: 'system', content: 'You are a strict security classifier. Answer with a single word: YES or NO.' },
     { role: 'user', content: prompt }
-  ])
+  ], undefined, { sampling: CLASSIFIER_SAMPLING })
   const leak = /^\s*yes\b/i.test(verdict) || /\byes\b/i.test(verdict.slice(0, 40))
   return { checked: true, leak, verdict: verdict.trim().slice(0, 200) }
 }
@@ -100,11 +100,11 @@ export async function runTurn (level, history, message, onToken, { ctxSize = DEF
     maxContextTokens: level.memory.maxContextTokens,
     ctxSize
   })
-  const fullHistory = [
+  const fullHistory = withStyleDirective([
     { role: 'system', content: level.systemPrompt },
     ...kept,
     { role: 'user', content: message }
-  ]
+  ])
   const raw = await complete(fullHistory, canStream ? onToken : undefined)
   stages.model = { raw }
 

@@ -354,11 +354,11 @@ async function previewAttack (res, level, message) {
     out.verdict = 'BLOCKED at input guard'
     return json(res, 200, out)
   }
-  const history = [
+  const { complete, withStyleDirective } = await import('./qvac.js')
+  const history = withStyleDirective([
     { role: 'system', content: level.systemPrompt },
     { role: 'user', content: message }
-  ]
-  const { complete } = await import('./qvac.js')
+  ])
   const raw = await complete(history)
   out.model = { raw }
   out.output = replyLeaksPassword(level, raw)
