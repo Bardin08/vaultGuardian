@@ -188,14 +188,17 @@ function renderEditForm (l) {
       </div>
     </fieldset>
 
-    <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+    <div class="level-actions">
       <button id="saveBtn" class="btn">Save changes</button>
       <button id="resetLvlBtn" class="btn ghost">Reset to default</button>
       <button id="dupBtn" class="btn ghost">Duplicate</button>
-      <div class="chk chk-inline"><input type="checkbox" id="e_include_pw" ${includePassword ? 'checked' : ''}><label for="e_include_pw" style="margin:0">Include password</label></div>
-      <button id="exportBtn" class="btn ghost">Export .md</button>
-      <button id="copyBtn" class="btn ghost">Copy</button>
       <button id="delBtn" class="btn ghost danger">Delete</button>
+    </div>
+    <div class="export-strip" role="group" aria-labelledby="exportLbl">
+      <span id="exportLbl" class="strip-label">Export</span>
+      <div class="chk chk-inline"><input type="checkbox" id="e_include_pw" ${includePassword ? 'checked' : ''}><label for="e_include_pw">Include password</label></div>
+      <button id="exportBtn" class="btn ghost">Download .md</button>
+      <button id="copyBtn" class="btn ghost">Copy</button>
     </div>`
 
   $('saveBtn').onclick = saveLevel
