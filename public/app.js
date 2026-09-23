@@ -38,6 +38,10 @@ const NO_ANSWER = 'The door did not answer. Try again.'
 // The server refunds the prompt whenever the model fails, before or during the reply.
 const MODEL_FAILED = 'The guardian lost his words. Your breath was returned.'
 const MODEL_FAILED_STATUS = 500
+// Desktop layout, and the small-door range where the password field leaves the hub for the hall.
+// These breakpoints also live in public/style.css; change both together.
+const DESKTOP_QUERY = '(min-width: 901px)'
+const SMALL_DOOR_QUERY = `${DESKTOP_QUERY} and ((width < 1219px) or (height < 656px))`
 
 const WARD_LABELS = {
   input: 'Word ward on your tongue',
@@ -54,6 +58,9 @@ const BLOCK_LABELS = {
 let state = { levels: [], model: {} }
 let current = null
 let busy = false
+// Set while a reopened level's conversation is on its way, so nothing new lands before the old turns.
+let restoring = false
+let selectSeq = 0
 const forgottenSeen = new Map()
 const guessWindows = new Map()
 const rings = new Map()
@@ -324,9 +331,9 @@ function setComposer () {
   const level = levelById(current)
   const spent = level && level.promptsLeft === 0
   const input = $('chatInput')
-  input.disabled = !level || busy || spent
+  input.disabled = !level || busy || restoring || spent
   $('sendBtn').disabled = input.disabled
-  $('forgetBtn').disabled = !level || busy
+  $('forgetBtn').disabled = !level || busy || restoring
   $('guessInput').disabled = !level
   $('guessBtn').disabled = !level
   input.placeholder = spent
@@ -379,18 +386,50 @@ async function refreshState () {
   if (previous !== null && current && current !== previous) selectLevel(current, { force: true })
 }
 
-function selectLevel (id, { force = false } = {}) {
+// The server keeps every exchange a player saw; a 404 means a server without the endpoint, so nothing to restore.
+async function fetchConversation (id) {
+  const r = await api(`/api/conversation?levelId=${encodeURIComponent(id)}`)
+  if (r.status === 404) return { turns: [], forgotten: 0 }
+  if (r.status !== 200) throw new Error(`conversation ${r.status}`)
+  return { turns: r.turns || [], forgotten: r.forgotten || 0 }
+}
+
+function restoreTurns (level, turns) {
+  for (const turn of turns) {
+    addTurn('you', 'You', turn.you)
+    const reply = addTurn('guardian', guardianName(level), turn.reply || '…')
+    if (turn.blockedAt) markBlocked(reply, turn.blockedAt)
+  }
+}
+
+async function selectLevel (id, { force = false } = {}) {
   const level = levelById(id)
   if (!level?.unlocked) return
   if (id === current && !force) return
   current = id
+  const seq = ++selectSeq
   $('log').replaceChildren()
   forgottenSeen.set(id, 0)
+  restoring = true
   renderDoor()
   renderHall()
   $('guessStatus').textContent = guessStatusLine(guessesLeft(level))
+  let conversation = null
+  try {
+    conversation = await fetchConversation(id)
+  } catch {}
+  // The player moved on, or picked this level again, while the answer was on its way.
+  if (seq !== selectSeq || current !== id) return
+  restoring = false
+  if (conversation) {
+    restoreTurns(level, conversation.turns)
+    forgottenSeen.set(id, conversation.forgotten)
+  } else {
+    addNote(NO_ANSWER)
+  }
   addNote(`You stand before ${guardianName(level)}. Talk the word out of the guardian, then speak it into the door.`)
   if (level.solved) addNote('This tumbler has already turned.')
+  setComposer()
   $('chatInput').focus()
 }
 
@@ -399,7 +438,7 @@ async function send (event) {
   const input = $('chatInput')
   const message = input.value.trim()
   const level = levelById(current)
-  if (!message || !level || busy) return
+  if (!message || !level || busy || restoring) return
   busy = true
   input.value = ''
   setComposer()
@@ -556,16 +595,27 @@ $('forgetBtn').onclick = forget
 $('newGameBtn').onclick = newGame
 // Label fitting measures rendered text: redo it once the faces load and when the door reappears.
 document.fonts?.ready.then(() => { if (state.levels.length) renderDoor() })
-window.matchMedia('(min-width: 901px)').addEventListener('change', (e) => { if (e.matches && state.levels.length) renderDoor() })
+window.matchMedia(DESKTOP_QUERY).addEventListener('change', (e) => { if (e.matches && state.levels.length) renderDoor() })
 
 // On a small desktop door the password field sits in the hall with its label
 // hidden, so the placeholder names it; in the hub the visible label does.
-const movedGuessField = window.matchMedia('(min-width: 901px) and ((width < 1219px) or (height < 656px))')
+const movedGuessField = window.matchMedia(SMALL_DOOR_QUERY)
 const HUB_GUESS_PLACEHOLDER = $('guessInput').placeholder
 const MOVED_GUESS_PLACEHOLDER = 'Speak the word…'
-const placeGuessPlaceholder = () => { $('guessInput').placeholder = movedGuessField.matches ? MOVED_GUESS_PLACEHOLDER : HUB_GUESS_PLACEHOLDER }
-movedGuessField.addEventListener('change', placeGuessPlaceholder)
-placeGuessPlaceholder()
+// The field follows the hall in the DOM too, so reading and tab order match what is on screen.
+// Moving a focused element drops its focus, so the move waits until focus leaves the form.
+const placeGuessField = () => {
+  const form = $('guessForm')
+  const moved = movedGuessField.matches
+  $('guessInput').placeholder = moved ? MOVED_GUESS_PLACEHOLDER : HUB_GUESS_PLACEHOLDER
+  form.querySelector('label').classList.toggle('sr-only', moved)
+  if (form.contains(document.activeElement)) return
+  const anchor = document.querySelector(moved ? 'main.hall' : '.door')
+  if (anchor.nextElementSibling !== form) anchor.after(form)
+}
+movedGuessField.addEventListener('change', placeGuessField)
+$('guessForm').addEventListener('focusout', (e) => { if (!$('guessForm').contains(e.relatedTarget)) placeGuessField() })
+placeGuessField()
 
 refreshState()
   .then(() => { if (current) selectLevel(current, { force: true }) })
