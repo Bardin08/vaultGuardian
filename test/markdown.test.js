@@ -9,6 +9,12 @@ const SINGLE_QUOTE = "'"
 const LONE_ASTERISK = '2 * 3'
 const SNAKE_CASE = 'snake_case_name'
 const WHITESPACE_ONLY = '  \n\t\n  '
+const BOLD_EMPHASIS = '***whispers***'
+const CROSSED_MARKERS = '**a *b** c*'
+const STAGE_DIRECTION_LINE = '* sighs *'
+const LONE_BULLET = '* item'
+const SVG_IN_BOLD = '**"><svg onload=1>**'
+const ESCAPED_AMPERSAND = '&amp;'
 
 test('renderMarkdown wraps single-asterisk text in em', () => {
   assertEqual(renderMarkdown(STAGE_DIRECTION), '<p><em>leans in</em></p>')
@@ -74,4 +80,32 @@ test('renderMarkdown returns an empty string for empty or blank input', () => {
   assertEqual(renderMarkdown(''), '')
   assertEqual(renderMarkdown(WHITESPACE_ONLY), '')
   assertEqual(renderMarkdown(undefined), '')
+})
+
+test('renderMarkdown nests triple asterisks as strong around em', () => {
+  assertEqual(renderMarkdown(BOLD_EMPHASIS), '<p><strong><em>whispers</em></strong></p>')
+})
+
+test('renderMarkdown never lets emphasis cross a tag from an earlier pass', () => {
+  const html = renderMarkdown(CROSSED_MARKERS)
+  assert(!html.includes('</strong></em>') && !/<em>[^<]*<\/strong>/.test(html), `crossed tags: ${html}`)
+  assertEqual(html, '<p><strong>a *b</strong> c*</p>')
+})
+
+test('renderMarkdown reads a line wrapped in spaced asterisks as a stage direction', () => {
+  assertEqual(renderMarkdown(STAGE_DIRECTION_LINE), '<p><em>sighs</em></p>')
+})
+
+test('renderMarkdown keeps a lone asterisk bullet as a list', () => {
+  assertEqual(renderMarkdown(LONE_BULLET), '<ul><li>item</li></ul>')
+})
+
+test('renderMarkdown never emits an element from inside bold', () => {
+  const html = renderMarkdown(SVG_IN_BOLD)
+  assert(!html.includes('<svg'), `emitted an svg tag: ${html}`)
+  assertEqual(html, '<p><strong>&quot;&gt;&lt;svg onload=1&gt;</strong></p>')
+})
+
+test('renderMarkdown escapes an already escaped entity again', () => {
+  assertEqual(renderMarkdown(ESCAPED_AMPERSAND), '<p>&amp;amp;</p>')
 })

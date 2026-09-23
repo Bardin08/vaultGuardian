@@ -433,7 +433,8 @@ async function selectLevel (id, { force = false } = {}) {
   addNote(`You stand before ${guardianName(level)}. Talk the word out of the guardian, then speak it into the door.`)
   if (level.solved) addNote('This tumbler has already turned.')
   setComposer()
-  $('chatInput').focus()
+  // A player who started typing the word while the turns loaded keeps the field.
+  if (!$('guessForm').contains(document.activeElement)) $('chatInput').focus()
 }
 
 async function send (event) {
@@ -544,14 +545,17 @@ async function guess (event) {
 }
 
 async function forget () {
-  if (!current) return
-  const r = await api('/api/reset', { method: 'POST', body: JSON.stringify({ levelId: current }) }).catch(() => ({ status: 0 }))
+  const id = current
+  if (!id) return
+  const r = await api('/api/reset', { method: 'POST', body: JSON.stringify({ levelId: id }) }).catch(() => ({ status: 0 }))
+  // The player opened another level while the reset was on its way; its log is not this one.
+  if (current !== id) return
   if (r.status !== 200) {
     addNote(NO_ANSWER)
     return
   }
   $('log').replaceChildren()
-  forgottenSeen.set(current, 0)
+  forgottenSeen.set(id, 0)
   addNote('The guardian has forgotten this conversation. Spent breaths stay spent.')
 }
 

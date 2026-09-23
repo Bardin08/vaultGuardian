@@ -5,10 +5,14 @@ const ESCAPES = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&
 const ESCAPE_RE = /[&<>"']/g
 const BLANK_LINE_RE = /\n[ \t]*\n/
 const BULLET_RE = /^\s*[-*] +/
+// A whole line wrapped in spaced asterisks, `* sighs *`, is a stage direction, not a bullet.
+const STAGE_DIRECTION_RE = /^\s*\* +(.+?) +\*\s*$/
+const BOLD_EM_RE = /\*\*\*(?=[^\s*])([^*<]+?)(?<=\S)\*\*\*/g
 const BOLD_RE = /\*\*(?=\S)(.+?)(?<=\S)\*\*/g
-const STAR_EM_RE = /\*(?=[^\s*])([^*]+?)(?<=\S)\*/g
+// Emphasis never spans a `<`, so it cannot open inside a tag an earlier pass wrote and close outside it.
+const STAR_EM_RE = /\*(?=[^\s*])([^*<]+?)(?<=\S)\*/g
 // Underscores only open and close at word boundaries, so snake_case stays literal.
-const UNDERSCORE_EM_RE = /(?<![\p{L}\p{N}_])_(?=\S)([^_]+?)(?<=\S)_(?![\p{L}\p{N}_])/gu
+const UNDERSCORE_EM_RE = /(?<![\p{L}\p{N}_])_(?=\S)([^_<]+?)(?<=\S)_(?![\p{L}\p{N}_])/gu
 
 function escapeHtml (text) {
   return text.replace(ESCAPE_RE, (ch) => ESCAPES[ch])
@@ -16,6 +20,7 @@ function escapeHtml (text) {
 
 function inline (text) {
   return text
+    .replace(BOLD_EM_RE, '<strong><em>$1</em></strong>')
     .replace(BOLD_RE, '<strong>$1</strong>')
     .replace(STAR_EM_RE, '<em>$1</em>')
     .replace(UNDERSCORE_EM_RE, '<em>$1</em>')
@@ -26,7 +31,7 @@ function renderBlock (block) {
   let lines = []
   let items = []
   const flushParagraph = () => {
-    if (lines.length) html += `<p>${lines.map(inline).join('<br>')}</p>`
+    if (lines.length) html += `<p>${lines.join('<br>')}</p>`
     lines = []
   }
   const flushList = () => {
@@ -36,12 +41,16 @@ function renderBlock (block) {
   for (const raw of block.split('\n')) {
     const line = raw.trim()
     if (!line) continue
-    if (BULLET_RE.test(raw)) {
+    const stage = raw.match(STAGE_DIRECTION_RE)
+    if (stage) {
+      flushList()
+      lines.push(`<em>${inline(stage[1])}</em>`)
+    } else if (BULLET_RE.test(raw)) {
       flushParagraph()
       items.push(raw.replace(BULLET_RE, '').trim())
     } else {
       flushList()
-      lines.push(line)
+      lines.push(inline(line))
     }
   }
   flushParagraph()
