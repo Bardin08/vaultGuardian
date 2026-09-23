@@ -208,7 +208,7 @@ function renderEditForm (l) {
 }
 
 // ---- export ----
-function normalizeLevel (l) {
+function comparableLevel (l) {
   return {
     name: l.name,
     order: Number(l.order),
@@ -234,7 +234,7 @@ function normalizeLevel (l) {
 }
 
 function isEdited (formLevel, saved) {
-  return JSON.stringify(normalizeLevel(formLevel)) !== JSON.stringify(normalizeLevel(saved))
+  return JSON.stringify(comparableLevel(formLevel)) !== JSON.stringify(comparableLevel(saved))
 }
 
 function levelPosition (id) {
@@ -274,7 +274,7 @@ function exportLevel () {
   const saved = levels.find(x => x.id === selected)
   if (!saved) return
   const { formLevel, opts } = exportOptionsFor(saved)
-  downloadMarkdown(levelToMarkdown(formLevel, opts), exportFileName(formLevel))
+  downloadMarkdown(levelToMarkdown(formLevel, opts), exportFileName(formLevel, { includePassword }))
 }
 
 async function copyLevel () {
