@@ -1,5 +1,9 @@
-/* Player screen: the vault door (left) and the guardian's hall (right). */
-body {
+/* Player screen: the vault door (left) and the guardian's hall (right).
+   The grid lives on .app, not body, so anything an extension appends to body
+   cannot become a grid row and steal height from the page. */
+body { overflow: hidden; }
+.app {
+  --door: min(640px, 42vw, 78dvh);
   height: 100dvh;
   overflow: hidden;
   display: grid;
@@ -16,16 +20,21 @@ body {
   min-height: 0;
   background: radial-gradient(circle at 50% 50%, #1f4a43 0, var(--deep) 70%);
   border-right: 2px solid var(--bronze);
+  container: door / inline-size;
 }
-.door-svg { width: min(640px, 42vw, 78dvh); height: auto; display: block; }
+.door-svg { width: var(--door); height: auto; display: block; }
 .wordmark { position: absolute; top: 28px; left: 36px; margin: 0; font: 22px var(--face-engraved); letter-spacing: .14em; text-transform: uppercase; color: var(--bronze-light); }
 .operator { position: absolute; top: 32px; right: 36px; font: 13px var(--face-engraved); letter-spacing: .18em; text-transform: uppercase; color: var(--bone-dim); text-decoration: none; }
 .operator:hover { color: var(--bone); }
-.seal { position: absolute; bottom: 28px; left: 36px; display: inline-flex; align-items: center; gap: 8px; }
+/* New game and the legend share one footer row; when the panel is too narrow
+   for both, the legend wraps above the button instead of sliding under it. */
+.door-foot { position: absolute; bottom: 28px; left: 36px; right: 36px; display: flex; flex-wrap: wrap-reverse; align-items: flex-start; justify-content: space-between; gap: 10px 24px; }
+.seal { display: inline-flex; align-items: center; gap: 8px; }
 .seal svg { width: 14px; height: 14px; flex: none; }
-.legend { position: absolute; bottom: 28px; right: 36px; margin: 0; font-size: 13px; line-height: 1.7; color: var(--bone-dim); text-align: right; font-variant-numeric: tabular-nums; }
+.legend { margin: 0 0 0 auto; font-size: 13px; line-height: 1.7; color: var(--bone-dim); text-align: right; font-variant-numeric: tabular-nums; }
 .legend b { color: var(--bone); font-weight: 500; }
 .strip { display: none; }
+@container door (max-width: 600px) { .seal-long { display: none; } }
 
 .plate { fill: var(--deep); stroke: var(--bronze-dark); stroke-width: 2; }
 .hub { fill: var(--deep); stroke: var(--soot); stroke-width: 2; }
@@ -44,22 +53,26 @@ body {
 .ring--live .notch { fill: var(--soot); }
 .ring--open .notch, .ring--locked .notch { fill: none; stroke: var(--patina-ink); stroke-width: 2; }
 
-/* ---- the password field in the hub ---- */
+/* ---- the password field in the hub ----
+   Everything inside is sized in em off one font-size that scales with the door:
+   13px at a 605px door (1440x900), smaller as the door shrinks, so the three
+   lines stay single-line inside the hub. */
 .guess {
   grid-area: door;
   place-self: center;
   z-index: 1;
-  width: calc(min(640px, 42vw, 78dvh) * .28);
+  width: calc(var(--door) * .28);
+  font-size: min(13px, var(--door) * .0215);
   display: grid;
-  gap: 6px;
+  gap: .46em;
   text-align: center;
 }
-.guess label { font: 13px var(--face-engraved); letter-spacing: .2em; text-transform: uppercase; color: var(--bronze-light); }
-.guess input { width: 100%; text-align: center; letter-spacing: .12em; font-weight: 500; background: var(--soot); border-color: var(--bronze); }
-.guess-submit { justify-self: center; background: none; border: 0; padding: 2px 4px; cursor: pointer; font: 12px var(--face-engraved); letter-spacing: .2em; text-transform: uppercase; color: var(--bronze-light); }
+.guess label { font: 1em var(--face-engraved); letter-spacing: .2em; text-transform: uppercase; color: var(--bronze-light); }
+.guess input { width: 100%; font-size: 1.31em; padding: .7em .82em; text-align: center; letter-spacing: .12em; font-weight: 500; background: var(--soot); border-color: var(--bronze); }
+.guess-submit { justify-self: center; background: none; border: 0; padding: .15em .3em; cursor: pointer; font: .92em var(--face-engraved); letter-spacing: .2em; text-transform: uppercase; color: var(--bronze-light); }
 .guess-submit:hover:not(:disabled) { color: var(--bone); }
 .guess-submit:disabled { opacity: .45; cursor: not-allowed; }
-.guess-status { margin: 0; min-height: 1.4em; font-size: 12.5px; color: var(--bone-dim); font-variant-numeric: tabular-nums; }
+.guess-status { margin: 0; min-height: 1.4em; font-size: .96em; color: var(--bone-dim); font-variant-numeric: tabular-nums; }
 .guess.is-wrong input { animation: refuse .4s ease; }
 @keyframes refuse { 20% { transform: translateX(-6px); } 40% { transform: translateX(5px); } 60% { transform: translateX(-3px); } 80% { transform: translateX(2px); } }
 
@@ -96,7 +109,8 @@ body {
 
 /* ---- narrow screens: the door becomes a band of segments ---- */
 @media (max-width: 900px) {
-  body { height: auto; min-height: 100dvh; overflow: visible; grid-template-columns: 1fr; grid-template-areas: "door" "hall" "guess"; }
+  body { overflow: visible; }
+  .app { height: auto; min-height: 100dvh; overflow: visible; grid-template-columns: 1fr; grid-template-areas: "door" "hall" "guess"; }
   .door {
     display: grid;
     grid-template-columns: 1fr auto;
@@ -108,12 +122,14 @@ body {
     background: var(--deep);
     border-right: 0;
     border-bottom: 2px solid var(--bronze);
+    container-type: normal;
   }
+  .door-foot { display: contents; }
   .door-svg { display: none; }
-  .wordmark, .operator, .seal, .legend { position: static; }
+  .wordmark, .operator { position: static; }
   .wordmark { grid-area: mark; font-size: 18px; }
   .operator { grid-area: op; }
-  .legend { grid-area: legend; text-align: left; line-height: 1.5; }
+  .legend { grid-area: legend; margin: 0; text-align: left; line-height: 1.5; }
   .seal { grid-area: seal; justify-self: start; min-height: 44px; font-size: 12.5px; padding: 8px 14px; }
   .strip { grid-area: strip; display: grid; grid-template-columns: repeat(auto-fit, minmax(38px, 1fr)); gap: 6px; list-style: none; margin: 0; padding: 0; }
   .strip button { position: relative; width: 100%; height: 44px; border: 0; border-radius: var(--radius); cursor: pointer; font: 14px var(--face-engraved); }
@@ -129,7 +145,7 @@ body {
   .hall { padding: 22px 16px 16px; }
   .hall h1 { font-size: 36px; }
   .log { overflow: visible; margin-top: 18px; }
-  .guess { grid-area: guess; place-self: stretch; width: auto; padding: 18px 16px 28px; text-align: left; border-top: 1px solid var(--patina-line); }
+  .guess { grid-area: guess; place-self: stretch; width: auto; font-size: 13px; padding: 18px 16px 28px; text-align: left; border-top: 1px solid var(--patina-line); }
   .guess input { text-align: left; }
   .guess-submit { justify-self: start; }
 }

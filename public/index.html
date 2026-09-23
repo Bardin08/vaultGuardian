@@ -17,13 +17,16 @@ FIRST VIEWPORT: Left 47%: the door at up to 640px with the password field in its
 FORM: Arcane vault door with rune tumblers, candidate 7 of 7, seed key a1932398.
 FINISH: unreviewed and undocumented is unfinished; this build ends with the finish review, the verdict, and DESIGN.md
 -->
+<div class="app">
 <section class="door" aria-label="The vault door">
   <p class="wordmark">Vault Guardian</p>
   <a class="operator" href="/admin">Operator</a>
   <svg id="door" class="door-svg" viewBox="-320 -320 640 640" role="group" aria-label="Tumblers, one per level"></svg>
   <ol id="strip" class="strip" aria-label="Levels"></ol>
-  <button id="newGameBtn" class="btn btn-quiet seal" type="button"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.2 6.2A5.2 5.2 0 1 1 3 9.6"/><path d="M2.8 2.8v3.6h3.6"/></svg>Seal the vault · new game</button>
-  <p id="legend" class="legend"></p>
+  <div class="door-foot">
+    <button id="newGameBtn" class="btn btn-quiet seal" type="button"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.2 6.2A5.2 5.2 0 1 1 3 9.6"/><path d="M2.8 2.8v3.6h3.6"/></svg><span><span class="seal-long">Seal the vault · </span>new game</span></button>
+    <p id="legend" class="legend"></p>
+  </div>
 </section>
 
 <form id="guessForm" class="guess" autocomplete="off">
@@ -51,6 +54,7 @@ FINISH: unreviewed and undocumented is unfinished; this build ends with the fini
   </form>
   <button id="forgetBtn" class="forget" type="button" disabled>Forget this conversation</button>
 </main>
+</div>
 <script src="/app.js"></script>
 </body>
 </html>
