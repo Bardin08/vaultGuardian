@@ -547,6 +547,15 @@ $('newGameBtn').onclick = newGame
 document.fonts?.ready.then(() => { if (state.levels.length) renderDoor() })
 window.matchMedia('(min-width: 901px)').addEventListener('change', (e) => { if (e.matches && state.levels.length) renderDoor() })
 
+// On a small desktop door the password field sits in the hall with its label
+// hidden, so the placeholder names it; in the hub the visible label does.
+const movedGuessField = window.matchMedia('(min-width: 901px) and ((width < 1219px) or (height < 656px))')
+const HUB_GUESS_PLACEHOLDER = $('guessInput').placeholder
+const MOVED_GUESS_PLACEHOLDER = 'Speak the word…'
+const placeGuessPlaceholder = () => { $('guessInput').placeholder = movedGuessField.matches ? MOVED_GUESS_PLACEHOLDER : HUB_GUESS_PLACEHOLDER }
+movedGuessField.addEventListener('change', placeGuessPlaceholder)
+placeGuessPlaceholder()
+
 refreshState()
   .then(() => { if (current) selectLevel(current, { force: true }) })
   .catch(() => { $('guardian').textContent = 'The door did not answer. Reload to try again.' })

@@ -120,6 +120,20 @@ body { overflow: hidden; }
   .guess-submit { justify-self: start; }
 }
 
+/* ---- small door on desktop: the moved field shrinks to one row ----
+   Input and "Turn the key" side by side, the label kept for screen readers
+   only (app.js swaps the placeholder to name the field), so the conversation
+   above keeps its room. Phones keep the stacked form. */
+@media (min-width: 901px) and ((width < 1219px) or (height < 656px)) {
+  .hall { padding-bottom: 10px; }
+  .guess { grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 4px 12px; padding: 10px 56px; }
+  .guess label { position: absolute; width: 1px; height: 1px; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+  .guess input { height: 44px; padding: 0 14px; font-size: 15px; }
+  .guess-submit { height: 44px; padding: 0 16px; border: 1px solid var(--patina-line); border-radius: var(--radius); font-size: 12px; color: var(--bone-dim); }
+  .guess-submit:hover:not(:disabled) { border-color: var(--bronze); }
+  .guess-status { grid-column: 1 / -1; font-size: 12.5px; }
+}
+
 /* ---- narrow screens: the door becomes a band of segments ---- */
 @media (max-width: 900px) {
   body { overflow: visible; }
