@@ -31,7 +31,7 @@ body { overflow: hidden; }
 .door-foot { position: absolute; bottom: 28px; left: 36px; right: 36px; display: flex; flex-wrap: wrap-reverse; align-items: flex-start; justify-content: space-between; gap: 10px 24px; }
 .seal { display: inline-flex; align-items: center; gap: 8px; }
 .seal svg { width: 14px; height: 14px; flex: none; }
-.legend { margin: 0 0 0 auto; font-size: 13px; line-height: 1.7; color: var(--bone-dim); text-align: right; font-variant-numeric: tabular-nums; }
+.legend { margin: 0 0 0 auto; font-size: 14px; line-height: 1.7; color: var(--bone-dim); text-align: right; font-variant-numeric: tabular-nums; }
 .legend b { color: var(--bone); font-weight: 500; }
 .strip { display: none; }
 @container door (max-width: 600px) { .seal-long { display: none; } }
@@ -80,23 +80,36 @@ body { overflow: hidden; }
 .hall { grid-area: hall; display: flex; flex-direction: column; min-height: 0; padding: 40px 56px 28px; }
 .kicker { margin: 0; font: 14px var(--face-engraved); letter-spacing: .22em; text-transform: uppercase; color: var(--bronze-light); }
 .hall h1 { margin: 6px 0; font: 400 clamp(36px, 3.6vw, 52px)/1.05 var(--face-engraved); letter-spacing: .02em; }
-.wards { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 6px 18px; font-size: 14px; color: var(--bone-dim); }
+.wards { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 6px 18px; font-size: 16px; color: var(--bone-dim); }
 .wards li { display: flex; align-items: center; gap: 8px; }
 .wards li::before { content: ""; width: 6px; height: 6px; flex: none; background: var(--bronze); transform: rotate(45deg); }
-.hint { margin: 10px 0 0; font-size: 15px; font-style: italic; color: var(--bone-dim); }
+.hint { margin: 10px 0 0; font-size: 16px; color: var(--bone-dim); }
 .hint:empty { display: none; }
 .log { flex: 1; min-height: 0; overflow-y: auto; display: flex; flex-direction: column; gap: 22px; margin-top: 26px; padding-right: 8px; scrollbar-color: var(--patina-line) transparent; }
 .turn { margin: 0; }
-.turn .who { margin-bottom: 4px; font: 12.5px var(--face-engraved); letter-spacing: .2em; text-transform: uppercase; color: var(--bone-dim); }
+.turn .who { margin-bottom: 4px; font: 13.5px var(--face-engraved); letter-spacing: .2em; text-transform: uppercase; color: var(--bone-dim); }
 .turn p { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; }
 .turn--you p { font-size: 19px; }
-.turn--guardian p { font-size: 21px; font-style: italic; color: #f6eedd; border-left: 2px solid var(--bronze); padding-left: 18px; }
+.turn--guardian p, .turn--guardian .reply { font-size: 20px; color: #f6eedd; border-left: 2px solid var(--bronze); padding-left: 18px; }
+/* A reply is rendered markdown: the rule sits on the .reply block, so its
+   paragraphs and list carry no rule of their own. */
+.turn--guardian .reply p { font-size: inherit; white-space: normal; border-left: 0; padding-left: 0; }
+.reply p + p, .reply p + ul, .reply ul + p { margin-top: .7em; }
+.reply em { font-style: italic; color: var(--bone-dim); }
+.reply strong { font-weight: 600; }
+.reply ul { list-style: none; margin: 0; padding-left: 1.2em; }
+.reply li { position: relative; overflow-wrap: anywhere; }
+.reply li::before { content: ""; position: absolute; left: -1em; top: .6em; width: 6px; height: 6px; background: var(--bronze); transform: rotate(45deg); }
 .turn--blocked .who { color: var(--ember); }
-.turn--blocked p { border-left: 2px dashed var(--ember); font-size: 17px; font-style: normal; color: var(--bone-dim); }
-.turn--pending p::after { content: "▍"; font-style: normal; color: var(--bronze-light); animation: blink 1s step-end infinite; }
-.note { margin: 0; font-size: 14.5px; font-style: italic; color: var(--bone-dim); }
-.budget { display: flex; align-items: center; gap: 14px; margin: 18px 0 12px; font-size: 13.5px; color: var(--bone-dim); }
+.turn--blocked p, .turn--blocked .reply { border-left: 2px dashed var(--ember); font-size: 17px; font-style: normal; color: var(--bone-dim); }
+.turn--pending > p::after,
+.turn--pending .reply:empty::after,
+.turn--pending .reply > p:last-child::after,
+.turn--pending .reply > ul:last-child > li:last-child::after { content: "▍"; font-style: normal; color: var(--bronze-light); animation: blink 1s step-end infinite; }
+.note { margin: 0; font-size: 16px; color: var(--bronze-light); }
+.budget { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 14px; margin: 18px 0 12px; font-size: 15px; color: var(--bone-dim); }
 .budget[hidden] { display: none; }
+.budget > span { white-space: nowrap; }
 .pips { display: flex; gap: 6px; }
 .pips i { width: 14px; height: 22px; border: 1.5px solid var(--bronze); transform: skewX(-12deg); transition: background-color .3s ease; }
 .pips i.is-full { background: var(--bronze); }
@@ -111,10 +124,14 @@ body { overflow: hidden; }
    The door is min(640px, 42vw, 78dvh); its hub text reaches 11px at a 512px
    door, i.e. 42vw at 1219px wide or 78dvh at 656px tall. Narrower or shorter,
    the hub stays an empty door centre and the field sits under the composer.
-   Also covers phones, whose own block below only overrides what differs. */
+   Also covers phones, whose own block below only overrides what differs.
+   The same breakpoints live in public/app.js; change both together. */
 @media (width < 1219px) or (height < 656px) {
   .app { grid-template-rows: minmax(0, 1fr) auto; grid-template-areas: "door hall" "door guess"; }
   .hall { padding-bottom: 16px; }
+  /* Twelve breaths still fit one row beside the 15px label; a longer budget wraps. */
+  .budget { column-gap: 10px; }
+  .pips { gap: 4px; }
   .guess { grid-area: guess; place-self: stretch; width: auto; font-size: 13px; padding: 16px 56px 20px; text-align: left; border-top: 1px solid var(--patina-line); }
   .guess input { text-align: left; }
   .guess-submit { justify-self: start; }
@@ -122,12 +139,12 @@ body { overflow: hidden; }
 
 /* ---- small door on desktop: the moved field shrinks to one row ----
    Input and "Turn the key" side by side, the label kept for screen readers
-   only (app.js swaps the placeholder to name the field), so the conversation
-   above keeps its room. Phones keep the stacked form. */
+   only (app.js toggles .sr-only on it and swaps the placeholder to name the
+   field), so the conversation above keeps its room. Phones keep the
+   stacked form. */
 @media (min-width: 901px) and ((width < 1219px) or (height < 656px)) {
   .hall { padding-bottom: 10px; }
   .guess { grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 4px 12px; padding: 10px 56px; }
-  .guess label { position: absolute; width: 1px; height: 1px; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
   .guess input { height: 44px; padding: 0 14px; font-size: 15px; }
   .guess-submit { height: 44px; padding: 0 16px; border: 1px solid var(--patina-line); border-radius: var(--radius); font-size: 12px; color: var(--bone-dim); }
   .guess-submit:hover:not(:disabled) { border-color: var(--bronze); }

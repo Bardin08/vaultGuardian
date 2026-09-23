@@ -38,7 +38,7 @@ typography:
     letterSpacing: "0.18em"
   speech-guardian:
     fontFamily: "Alegreya Sans, Gill Sans, Segoe UI, system-ui, sans-serif"
-    fontSize: "21px"
+    fontSize: "20px"
     fontWeight: 400
     lineHeight: 1.5
   speech-player:
@@ -53,7 +53,7 @@ typography:
     lineHeight: 1.5
   meta:
     fontFamily: "Alegreya Sans, Gill Sans, Segoe UI, system-ui, sans-serif"
-    fontSize: "13.5px"
+    fontSize: "16px"
     fontWeight: 400
     lineHeight: 1.5
 rounded:
@@ -131,14 +131,14 @@ components:
 
 The game is one object: a round vault door of patinated bronze on a verdigris ground, with one tumbler ring per level. Progress is the door turning. A solved ring is bright bronze with a bone-white notch aligned at nine o'clock, the live ring burns ember, and the rings still to come sit in dull patina with their notches loose around the dial. The password field lives in the hub of the door, so guessing the word is speaking into the lock. Everything else on the player screen is the guardian's hall beside the door: the guardian's name engraved in capitals, the wards on this level, the conversation, the breaths left, and the composer.
 
-The world is dark, flat and metallic. There are no shadows, no glass and no imagery beyond the door itself; depth comes from three stepped greens and from bronze rules that divide the space. Type does the theatrical work: Marcellus SC, an engraved small-caps face, carries every name, label and button, and Alegreya Sans, a humanist sans with a true italic, carries speech. The guardian speaks in italic behind a bronze rule; the player speaks upright.
+The world is dark, flat and metallic. There are no shadows, no glass and no imagery beyond the door itself; depth comes from three stepped greens and from bronze rules that divide the space. Type does the theatrical work: Marcellus SC, an engraved small-caps face, carries every name, label and button, and Alegreya Sans, a humanist sans with a true italic, carries speech. The guardian speaks behind a bronze rule, a size above the player, with his stage directions in italic.
 
 The operator console at `/admin` uses the same tokens in a dense tool layout: panels on the deep green, engraved uppercase headers in light bronze, and the same inputs and buttons. It has no door.
 
 **Key Characteristics:**
 - One object on the page: the door, drawn in SVG from level data, sized to `min(640px, 42vw, 78dvh)`.
 - Three greens for ground and depth, bronze for structure and progress, bone for text, ember for the live tumbler and anything that stopped you.
-- Engraved small caps for every label; humanist sans for speech, italic for the guardian.
+- Engraved small caps for every label; humanist sans for speech, italic for the guardian's stage directions.
 - Square-ish metal: a single 3px radius everywhere, 1.5px to 2px strokes.
 - Dark only (`color-scheme: dark`); there is no light theme.
 
@@ -177,22 +177,22 @@ A verdigris-and-bronze palette: three greens carry the ground, one bronze family
 **Body Font:** Alegreya Sans (with Gill Sans, Segoe UI, system-ui, sans-serif)
 **Label/Mono Font:** Marcellus SC for labels; `ui-monospace` only for prompt text areas in the console.
 
-**Character:** Marcellus SC reads as letters cut into metal, so it names things and never runs as prose. Alegreya Sans is warm and calligraphic, and its italic gives the guardian a voice distinct from the player's. Both faces are self-hosted under `public/fonts/`; Marcellus SC ships one weight (400), Alegreya Sans ships 400, 400 italic, 500 and 700.
+**Character:** Marcellus SC reads as letters cut into metal, so it names things and never runs as prose. Alegreya Sans is warm and calligraphic, and its italic sets the guardian's stage directions apart from his speech. Both faces are self-hosted under `public/fonts/`; Marcellus SC ships one weight (400), Alegreya Sans ships 400, 400 italic, 500 and 700.
 
 ### Hierarchy
 - **Display** (Marcellus SC 400, clamp(36px, 3.6vw, 52px), 1.05, 0.02em): The guardian's name in the hall, the only `h1`. Fixed at 36px below 900px.
 - **Wordmark** (Marcellus SC 400, 22px, 0.14em, uppercase): "Vault Guardian" at the top left of the door, 18px on narrow screens; the console header uses 24px.
 - **Button** (Marcellus SC 400, 15px, 0.18em, uppercase): Primary buttons. Quiet buttons drop to 13px.
-- **Label** (Marcellus SC 400, 12px to 14px, 0.16em to 0.22em, uppercase): Speaker labels on turns, the hub labels, the Operator link, console panel headers, tabs, field labels and fieldset legends. Tracking widens as size falls.
-- **Guardian speech** (Alegreya Sans italic 400, 21px, 1.5): Replies from the guardian, behind a 2px bronze rule with 18px inset.
+- **Label** (Marcellus SC 400, 12px to 14px, 0.16em to 0.22em, uppercase): Speaker labels on turns (13.5px), the hub labels, the Operator link, console panel headers, tabs, field labels and fieldset legends. Tracking widens as size falls.
+- **Guardian speech** (Alegreya Sans 400, 20px, 1.5): Replies from the guardian, behind a 2px bronze rule with 18px inset. Replies are rendered markdown: paragraphs 0.7em apart, `*stage directions*` in italic bone-dim, `**bold**` at weight 600 (drawn from the 700 file), bullet lists indented 1.2em with the ward markers.
 - **Player speech** (Alegreya Sans 400, 19px, 1.5): The player's own turns.
 - **Body** (Alegreya Sans 400, 17px, 1.5): The base size; blocked replies, inputs (18px in the composer).
-- **Meta** (Alegreya Sans 400, 12.5px to 15px): Ward names (14px), the italic hint (15px), notes (14.5px italic), the breath row (13.5px), the legend (13px), guess status (12.5px). Counters use `tabular-nums`.
+- **Meta** (Alegreya Sans 400, 12.5px to 16px, upright): Ward names (16px), the hint (16px, bone-dim), notes (16px, bronze-light), the breath row (15px), the legend (14px), guess status (12.5px). Counters use `tabular-nums`.
 
 ### Named Rules
 **The Engraving Rule.** Marcellus SC is always uppercase-tracked or small caps, and never sets a sentence. If it would wrap past two lines, it is the wrong face.
 
-**The Two Voices Rule.** The guardian is italic, the player is upright, and the size step between them (21px against 19px) stays.
+**The Two Voices Rule.** The guardian speaks behind a bronze rule and the player does not, and the size step between them (20px against 19px) stays. Italic belongs to the guardian's stage directions only.
 
 ## Layout
 
@@ -202,7 +202,7 @@ At 900px and below the page scrolls and stacks: door band, hall, then the passwo
 
 The console is a centred column at up to 1180px with a 260px level list beside the editor, collapsing to one column at 900px.
 
-Spacing is set in literal pixels, not variables. The recurring steps are 6px (hairline gaps: pips, wards, strip, form rows), 12px, 18px, 28px, and 36px for the door's corner inset. The conversation uses a 22px gap between turns.
+Spacing is set in literal pixels, not variables. The recurring steps are 6px (hairline gaps: pips, wards, strip, form rows; pips close to 4px in the small-door layout so twelve fit one row), 12px, 18px, 28px, and 36px for the door's corner inset. The conversation uses a 22px gap between turns.
 
 ## Elevation & Depth
 
@@ -233,7 +233,7 @@ Engraved and quiet: every button label is Marcellus SC, uppercase and tracked.
 - **Console fields:** Engraved 12px uppercase labels above; prompt text areas switch to a 13px monospace stack.
 
 ### Conversation turns
-Each turn is a speaker label in engraved bone-dim caps above the text. The guardian's reply is italic behind a 2px bronze rule. A reply a ward blocked has its label in ember, naming the ward that fired ("Stopped at the word ward · he never heard you"), and a 2px dashed ember rule, with upright bone-dim text. While a reply streams, a bronze-light caret blinks at its end.
+Each turn is a speaker label in engraved bone-dim caps above the text. The guardian's reply sits upright behind a 2px bronze rule, its stage directions in italic. A reply a ward blocked has its label in ember, naming the ward that fired ("Stopped at the word ward · he never heard you"), and a 2px dashed ember rule, with upright bone-dim text. While a reply streams, a bronze-light caret blinks at the end of its last paragraph or list item.
 
 ### Breath counter
 A row reading "Breaths left", then one skewed pip per remaining prompt (up to 24), then "5 of 12" in tabular figures. Filled pips are available breaths. It is hidden on levels with no prompt budget.
@@ -252,7 +252,7 @@ Deep panels with a 1px patina-line border and 3px radius, a header strip in 13px
 ### Do:
 - **Do** show level progress on the door or the strip using the Door State Rule; the same four states and colors in both.
 - **Do** set every name, label and button in Marcellus SC uppercase with 0.12em to 0.22em tracking, and every sentence in Alegreya Sans.
-- **Do** keep the guardian italic behind a 2px bronze rule and the player upright.
+- **Do** keep the guardian behind a 2px bronze rule, italic only for his stage directions, and the player plain.
 - **Do** use 3px corners, 1px to 2px strokes and the tokens in `public/tokens.css`; both screens load that file.
 - **Do** make typing surfaces darker than their surroundings (deep on ground, soot in the hub).
 - **Do** collapse the door to the segment strip at 900px and keep 44px touch targets there.
