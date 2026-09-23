@@ -1,5 +1,7 @@
 // Player screen: the vault door. Talks only to the public API; the password
 // never reaches this file.
+import { renderMarkdown } from '/markdown.js'
+
 const $ = (id) => document.getElementById(id)
 const SVG_NS = 'http://www.w3.org/2000/svg'
 
@@ -332,18 +334,30 @@ function setComposer () {
     : level ? `Speak to ${guardianName(level)}…` : ''
 }
 
+// Guardian replies are markdown rendered into a div.reply; the player's own words stay plain text.
 function addTurn (kind, who, text) {
   const el = document.createElement('div')
   el.className = `turn turn--${kind}`
   const label = document.createElement('div')
   label.className = 'who'
   label.textContent = who
-  const body = document.createElement('p')
-  body.textContent = text
+  const guardian = kind.split(' ').includes('guardian')
+  const body = document.createElement(guardian ? 'div' : 'p')
+  if (guardian) {
+    body.className = 'reply'
+    body.innerHTML = renderMarkdown(text)
+  } else {
+    body.textContent = text
+  }
   el.append(label, body)
   $('log').appendChild(el)
   el.scrollIntoView({ block: 'end' })
   return { el, label, body }
+}
+
+function markBlocked (turn, blockedAt) {
+  turn.el.classList.add('turn--blocked')
+  turn.label.textContent = BLOCK_LABELS[blockedAt] || 'A ward stopped this'
 }
 
 function addNote (text) {
@@ -410,8 +424,8 @@ async function send (event) {
       failed = NO_ANSWER
     } else {
       await readSSE(res, (ev, data) => {
-        if (ev === 'token') { text += data.token; reply.body.textContent = text }
-        else if (ev === 'message') { text = data.text; reply.body.textContent = text }
+        if (ev === 'token') { text += data.token; reply.body.innerHTML = renderMarkdown(text) }
+        else if (ev === 'message') { text = data.text; reply.body.innerHTML = renderMarkdown(text) }
         else if (ev === 'done') done = data
         else if (ev === 'error') failed = MODEL_FAILED
       })
@@ -424,11 +438,8 @@ async function send (event) {
     reply.el.remove()
     addNote(failed)
   } else {
-    reply.body.textContent = text || '…'
-    if (done?.blockedAt) {
-      reply.el.classList.add('turn--blocked')
-      reply.label.textContent = BLOCK_LABELS[done.blockedAt] || 'A ward stopped this'
-    }
+    reply.body.innerHTML = renderMarkdown(text || '…')
+    if (done?.blockedAt) markBlocked(reply, done.blockedAt)
     if (done?.forgotten > (forgottenSeen.get(current) || 0)) {
       forgottenSeen.set(current, done.forgotten)
       addNote(`The guardian has forgotten your first ${done.forgotten} ${done.forgotten === 1 ? 'exchange' : 'exchanges'}.`)
