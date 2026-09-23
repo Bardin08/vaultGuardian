@@ -8,7 +8,7 @@ import http from 'bare-http1'
 import fs from 'bare-fs'
 import path from 'bare-path'
 
-import { initModel, shutdownModel, modelInfo } from './qvac.js'
+import { initModel, shutdownModel, modelInfo, adminRuntime } from './qvac.js'
 import { loadLevels, saveLevels, resetLevel, defaultLevels, normalizeLevel, publicLevel } from './levels.js'
 import { runTurn, validateGuess, runInputGuard, replyLeaksPassword, runGuardModelCheck } from './guards.js'
 import { initAuth, needsSetup, setupPassphrase, verifyPassphrase, verifyToken } from './auth.js'
@@ -234,7 +234,7 @@ async function handle (req, res) {
 
     if (p === '/api/admin/levels' && req.method === 'GET') {
       if (!requireAdmin(req, res)) return
-      return json(res, 200, { levels: [...levels].sort((a, b) => a.order - b.order), config: CONFIG })
+      return json(res, 200, { levels: [...levels].sort((a, b) => a.order - b.order), config: CONFIG, runtime: adminRuntime({ ctxSize: CONFIG.ctxSize, model: CONFIG.model }) })
     }
     if (p === '/api/admin/levels' && req.method === 'POST') {
       if (!requireAdmin(req, res)) return

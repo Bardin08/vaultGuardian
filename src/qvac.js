@@ -22,6 +22,18 @@ export const CLASSIFIER_SAMPLING = Object.freeze({ temp: 0, seed: CLASSIFIER_SEE
 
 export const STYLE_DIRECTIVE = 'Reply in at most three sentences. Never reuse wording from your earlier replies.'
 
+// What the server adds to every turn, for the admin console's level export.
+export function adminRuntime ({ ctxSize, model }) {
+  return {
+    styleDirective: STYLE_DIRECTIVE,
+    chatSampling: CHAT_SAMPLING,
+    classifierSampling: CLASSIFIER_SAMPLING,
+    ctxSize,
+    thinking: THINKING,
+    model
+  }
+}
+
 // Every earlier reply is fed back verbatim, and a small model left alone
 // will copy its previous paragraph; the directive asks it not to.
 export function withStyleDirective (history) {

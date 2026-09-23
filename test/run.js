@@ -21,7 +21,8 @@ const SUITES = [
   './markdown-guard.test.js',
   './conversation.test.js',
   './sampling.test.js',
-  './level-export.test.js'
+  './level-export.test.js',
+  './admin-runtime.test.js'
 ]
 
 for (const suite of SUITES) await import(suite)
