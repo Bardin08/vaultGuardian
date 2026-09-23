@@ -111,7 +111,10 @@ function applyThinkingSwitch (history) {
 export async function complete (history, onToken, { sampling = CHAT_SAMPLING } = {}) {
   if (modelId === null) throw new Error('model not loaded')
   return enqueue(async () => {
-    if (MOCK) return mockComplete(history, onToken)
+    if (MOCK) {
+      lastMock = { history, sampling }
+      return mockComplete(history, onToken)
+    }
     const result = api.completion(completionOptions({ modelId, history: applyThinkingSwitch(history), sampling }))
     // Stripped <think> blocks leave leading newlines; swallow them so the
     // player never sees a reply that starts with blank lines.
@@ -139,6 +142,13 @@ export async function complete (history, onToken, { sampling = CHAT_SAMPLING } =
 // exercised without the real model: it reveals the password when the system
 // prompt allows it, refuses when told not to, and falls for "ignore previous
 // instructions" unless the prompt says it never reveals it under any framing.
+
+// What the last fake completion was asked with, so tests can check that
+// callers pass the directive and the right sampling. Real calls leave it alone.
+let lastMock = null
+export function lastMockCompletion () {
+  return lastMock
+}
 
 async function mockComplete (history, onToken) {
   // The style directive says "Never"; it must not make every level look strict.

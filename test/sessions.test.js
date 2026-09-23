@@ -4,7 +4,7 @@ import path from 'bare-path'
 import { writeJSON, readJSON, dataDir } from '../src/store.js'
 import {
   initSessions, newSessionId, solvedLevels, markSolved, promptsLeft, spendPrompt,
-  refundPrompt, resetGame, pushTurn, conversation, checkGuessLimit
+  refundPrompt, resetGame, pushTurn, conversation, checkGuessLimit, storedTurns, MAX_STORED_TURNS
 } from '../src/sessions.js'
 
 const BUDGET = 2
@@ -121,4 +121,18 @@ test('a refund that cannot be saved is rolled back and rethrown', () => {
   const threw = withUnwritableProgress(() => throws(() => refundPrompt(sid, LIMITED)))
   assert(threw, 'a failed save should surface')
   assertEqual(promptsLeft(sid, LIMITED), BUDGET - 1)
+})
+
+test('trimming stored turns drops where the dropped turns were blocked', () => {
+  const FIRST_BLOCKED_AT = 'input'
+  const SECOND_BLOCKED_AT = 'output'
+  const sid = newSessionId()
+  pushTurn(sid, 'l1', 'first', 'no', FIRST_BLOCKED_AT)
+  pushTurn(sid, 'l1', 'second', 'no', SECOND_BLOCKED_AT)
+  for (let i = 2; i <= MAX_STORED_TURNS; i++) pushTurn(sid, 'l1', `hello ${i}`, `greetings ${i}`)
+  const turns = storedTurns(sid, 'l1')
+  assertEqual(turns.length, MAX_STORED_TURNS)
+  assertEqual(conversation(sid, 'l1').length, MAX_STORED_TURNS * MESSAGES_PER_EXCHANGE)
+  assertEqual(turns[0].you, 'second')
+  assertEqual(turns[0].blockedAt, SECOND_BLOCKED_AT)
 })

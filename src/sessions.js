@@ -5,7 +5,7 @@ import { readJSON, writeJSON } from './store.js'
 
 const PROGRESS_FILE = 'progress.json'
 // Trimming decides what the model sees; this only bounds memory use.
-const MAX_STORED_TURNS = 100
+export const MAX_STORED_TURNS = 100
 
 const sessions = new Map()
 let progress = new Map()
