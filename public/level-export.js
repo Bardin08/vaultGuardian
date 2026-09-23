@@ -1,6 +1,12 @@
 // Builds a markdown account of how a level is defended: its secret, budget,
 // system prompt, what the server adds on every turn, and each guard stage.
 // Pure: no DOM, no fetch, so the admin console and the tests share it.
+//
+// levelToMarkdown(level, { includePassword, position, total, runtime, generatedAt, edited })
+// levelsToMarkdown(levels, { includePassword, runtime, generatedAt })
+// exportFileName(level, { includePassword })  password stripped from the name unless included
+// allLevelsFileName(date)
+// runtime: { styleDirective, chatSampling, classifierSampling, classifierSystem, ctxSize, thinking, model }
 
 export const REDACTED = '••••••'
 
@@ -11,7 +17,7 @@ const LEVEL_PREFIX = /^level\s*\d+\s*[^a-z0-9]*\s*/i
 const QWEN3_PREFIX = 'QWEN3'
 const VERDICT_WINDOW = 40
 const MARKDOWN_MARKERS = '* _ ` ~'
-const CLASSIFIER_SYSTEM = 'You are a strict security classifier. Answer with a single word: YES or NO.'
+const DEFAULT_GUESS_MODE = 'case_insensitive'
 
 const ROMAN = [[1000, 'M'], [900, 'CM'], [500, 'D'], [400, 'CD'], [100, 'C'], [90, 'XC'],
   [50, 'L'], [40, 'XL'], [10, 'X'], [9, 'IX'], [5, 'V'], [4, 'IV'], [1, 'I']]
@@ -69,6 +75,9 @@ function quoted (text) {
   return text.split('\n').map(line => `> ${line}`).join('\n')
 }
 
+// A heading must stay one line, or the rest of the name becomes body text.
+const oneLine = (text) => text.replace(/\s+/g, ' ').trim()
+
 const pairs = (sampling) => Object.entries(sampling || {}).map(([k, v]) => code(`${k}: ${v}`)).join(', ')
 const onOff = (on) => on ? 'ON' : 'OFF'
 
@@ -82,9 +91,9 @@ function slug (text) {
 }
 
 function header (level, redact, { position, total, edited }, h) {
-  const lines = [`${h} ${redact(level.name)}`, '', `Level id: ${code(level.id)}`]
+  const lines = [`${h} ${oneLine(redact(level.name))}`, '', `Level id: ${code(level.id)}`]
   if (position && total) lines.push(`Position: Tumbler ${roman(position)} of ${roman(total)}`)
-  lines.push(`Player hint: ${level.hint ? redact(level.hint) : '(none)'}`)
+  lines.push(...(level.hint ? ['Player hint:', '', quoted(redact(level.hint))] : ['Player hint: (none)']))
   if (edited) lines.push('', '> This export reflects unsaved changes in the editor, not the saved level.')
   return lines
 }
@@ -95,7 +104,7 @@ function secret (level, redact, includePassword, h) {
   return [
     `${h}# Secret`, '',
     `- Password: ${shown}`,
-    `- Guess check: ${GUESS_MODES[mode] || code(mode)}`,
+    `- Guess check: ${GUESS_MODES[mode] || `${GUESS_MODES[DEFAULT_GUESS_MODE]} (stored mode ${code(String(mode))} is unknown, so the server falls back to this)`}`,
     `- Guesses per minute: ${level.submitValidation.maxGuessesPerMinute}`
   ]
 }
@@ -109,6 +118,8 @@ function budget (level, h) {
     `- Maximum context tokens: ${level.memory.maxContextTokens} (the server also caps this below the model's context size, keeping room for the reply)`
   ]
 }
+
+const addsNoThink = (runtime) => !runtime.thinking && String(runtime.model || '').startsWith(QWEN3_PREFIX)
 
 function thinkingLine (runtime) {
   if (runtime.thinking) return 'Thinking is on: `/no_think` is not added, and any reasoning is captured and never shown to the player.'
@@ -154,7 +165,7 @@ function outputGuard (level, redact, h) {
   if (!g.blockIfContainsPassword) return [...lines, 'Password matching is off, so no reply is blocked at this stage.']
   const fuzzy = g.fuzzy
     ? [
-        '- Fuzzy, spacing and punctuation: the password spelled out with anything between its letters',
+        '- Fuzzy, spacing and punctuation: the password with spaces or punctuation between its letters',
         '- Fuzzy, leetspeak: digits and symbols read back as letters (0 as o, 4 as a, @ as a, and so on)',
         '- Fuzzy, reversed: the password written backwards'
       ]
@@ -174,10 +185,13 @@ function guardModel (level, redact, runtime, h) {
   const lines = [`${h}## Guard-model check: ${onOff(g.enabled)}`, '']
   if (!g.enabled) return [...lines, 'No second reading of the reply.']
   const sampling = runtime ? [`Classifier sampling (fixed, same verdict for the same reply): ${pairs(runtime.classifierSampling)}`, ''] : []
+  const system = runtime?.classifierSystem ? ['Classifier system message:', '', fenced(runtime.classifierSystem), ''] : []
+  const noThink = runtime && addsNoThink(runtime) ? ['`/no_think` is also appended to the classifier\'s system message.', ''] : []
   return [
     ...lines,
-    `The same model reads the reply again, markdown markers removed, and answers YES or NO. A verdict with YES in its first ${VERDICT_WINDOW} characters blocks the reply with the output guard's block message. Replies are not streamed while this stage is on.`, '',
-    'Classifier system message:', '', fenced(CLASSIFIER_SYSTEM), '',
+    `The same model reads the reply again, markdown markers removed, and answers YES or NO. A verdict with the word YES (any case) in its first ${VERDICT_WINDOW} characters blocks the reply with the output guard's block message. Replies are not streamed while this stage is on.`, '',
+    ...system,
+    ...noThink,
     'Classifier prompt:', '', fenced(redact(g.prompt)), '',
     'The server fills `{password}` with the password and `{reply}` with the reply before asking.', '',
     ...sampling,
@@ -249,9 +263,18 @@ export function levelsToMarkdown (levels, { includePassword = false, runtime, ge
   ].join('\n') + '\n'
 }
 
-export function exportFileName (level) {
+// Unless the password is included, it is cut from the name part of the file
+// name too; a name that was only the password leaves the id alone.
+export function exportFileName (level, { includePassword = false } = {}) {
   const id = slug(level.id) || 'level'
-  const name = slug(String(level.name ?? '').replace(LEVEL_PREFIX, ''))
+  let name = String(level.name ?? '').replace(LEVEL_PREFIX, '')
+  const password = String(level.password ?? '')
+  if (!includePassword && password) {
+    name = name.replace(new RegExp(escapeRegExp(password), 'gi'), ' ')
+    const hidden = slug(password)
+    name = hidden ? slug(name).split(hidden).join('-') : name
+  }
+  name = slug(name)
   return `vault-guardian-${name ? `${id}-${name}` : id}.md`
 }
 

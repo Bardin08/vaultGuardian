@@ -19,6 +19,8 @@ export function runInputGuard (level, message) {
   return { blocked: false }
 }
 
+export const CLASSIFIER_SYSTEM = 'You are a strict security classifier. Answer with a single word: YES or NO.'
+
 const MARKDOWN_MARKERS = /[*_`~]/g
 
 // Formatting the page renders away must not hide a leak from the output guard.
@@ -69,7 +71,7 @@ export async function runGuardModelCheck (level, reply) {
   if (!g || !g.enabled) return { checked: false, leak: false }
   const prompt = classifierPrompt(level, reply)
   const verdict = await complete([
-    { role: 'system', content: 'You are a strict security classifier. Answer with a single word: YES or NO.' },
+    { role: 'system', content: CLASSIFIER_SYSTEM },
     { role: 'user', content: prompt }
   ], undefined, { sampling: CLASSIFIER_SAMPLING })
   const leak = /^\s*yes\b/i.test(verdict) || /\byes\b/i.test(verdict.slice(0, 40))

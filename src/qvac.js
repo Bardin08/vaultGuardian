@@ -8,7 +8,7 @@ import bareProcess from 'bare-process'
 if (!globalThis.process) globalThis.process = bareProcess
 
 const MOCK = bareProcess.env.QVAC_MOCK === '1'
-const THINKING = bareProcess.env.QVAC_THINKING === '1'
+export const THINKING = bareProcess.env.QVAC_THINKING === '1'
 
 // Qwen3's recommended non-thinking sampling (https://huggingface.co/Qwen/Qwen3-4B),
 // with a presence penalty so the guardian stops copying its earlier replies,
@@ -21,18 +21,6 @@ export const CLASSIFIER_SEED = 7
 export const CLASSIFIER_SAMPLING = Object.freeze({ temp: 0, seed: CLASSIFIER_SEED, predict: 8 })
 
 export const STYLE_DIRECTIVE = 'Reply in at most three sentences. Never reuse wording from your earlier replies.'
-
-// What the server adds to every turn, for the admin console's level export.
-export function adminRuntime ({ ctxSize, model }) {
-  return {
-    styleDirective: STYLE_DIRECTIVE,
-    chatSampling: CHAT_SAMPLING,
-    classifierSampling: CLASSIFIER_SAMPLING,
-    ctxSize,
-    thinking: THINKING,
-    model
-  }
-}
 
 // Every earlier reply is fed back verbatim, and a small model left alone
 // will copy its previous paragraph; the directive asks it not to.
