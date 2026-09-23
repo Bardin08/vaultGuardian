@@ -14,9 +14,10 @@ import { runTurn, validateGuess, runInputGuard, replyLeaksPassword, runGuardMode
 import { initAuth, needsSetup, setupPassphrase, verifyPassphrase, verifyToken } from './auth.js'
 import { parseCtxSize } from './context.js'
 import { withPrompt } from './play.js'
+import { conversationView } from './conversation.js'
 import { contentTypeFor, cacheControlFor, versionAssetUrls } from './static.js'
 import {
-  initSessions, newSessionId, conversation, pushTurn, resetConversation,
+  initSessions, newSessionId, conversation, pushTurn, resetConversation, storedTurns,
   solvedLevels, markSolved, checkGuessLimit, isValidSessionId, promptsLeft, resetGame
 } from './sessions.js'
 
@@ -174,6 +175,15 @@ async function handle (req, res) {
       return json(res, 200, { levels: levelsForPlayer(sid), freeRoam: CONFIG.freeRoam, model: modelInfo() })
     }
 
+    if (p === '/api/conversation' && req.method === 'GET') {
+      const sid = ensureSid(req, res)
+      const levelId = url.searchParams.get('levelId')
+      const level = levels.find(l => l.id === levelId)
+      if (!level) return json(res, 404, { error: 'no such level' })
+      if (!isUnlocked(sid, levelId)) return json(res, 403, { error: 'level locked' })
+      return json(res, 200, conversationView({ turns: storedTurns(sid, levelId), level, ctxSize: CONFIG.ctxSize }))
+    }
+
     if (p === '/api/chat' && req.method === 'POST') {
       const sid = ensureSid(req, res)
       const body = await readBody(req)
@@ -327,7 +337,7 @@ async function chat (req, res, sid, body, admin) {
     const result = outcome.result
     if (!result.streamed) write('message', { text: result.text })
     write('done', { blockedAt: result.blockedAt, forgotten: result.forgotten, promptsLeft: admin ? null : promptsLeft(sid, level) })
-    pushTurn(sid, levelId, msg, result.text)
+    pushTurn(sid, levelId, msg, result.text, result.blockedAt)
     addLog({ kind: 'chat', levelId, admin, blockedAt: result.blockedAt })
   } catch (err) {
     console.error('[chat] error:', err)

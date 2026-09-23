@@ -44,7 +44,7 @@ function progressOf (sid) {
 export function getSession (sid) {
   let s = sessions.get(sid)
   if (!s) {
-    s = { conversations: new Map(), guesses: new Map() }
+    s = { conversations: new Map(), blocked: new Map(), guesses: new Map() }
     sessions.set(sid, s)
   }
   return s
@@ -64,14 +64,40 @@ export function conversation (sid, levelId) {
   return s.conversations.get(levelId)
 }
 
-export function pushTurn (sid, levelId, userMsg, assistantMsg) {
+// Where each exchange was blocked, one entry per exchange, kept beside the
+// model history so that history stays { role, content } only.
+function blockedList (sid, levelId) {
+  const s = getSession(sid)
+  if (!s.blocked.has(levelId)) s.blocked.set(levelId, [])
+  return s.blocked.get(levelId)
+}
+
+export function pushTurn (sid, levelId, userMsg, assistantMsg, blockedAt = null) {
   const conv = conversation(sid, levelId)
+  const blocked = blockedList(sid, levelId)
   conv.push({ role: 'user', content: userMsg }, { role: 'assistant', content: assistantMsg })
-  while (conv.length > MAX_STORED_TURNS * 2) conv.shift()
+  blocked.push(blockedAt)
+  while (conv.length > MAX_STORED_TURNS * 2) {
+    conv.splice(0, 2)
+    blocked.shift()
+  }
+}
+
+// The exchanges as the player saw them.
+export function storedTurns (sid, levelId) {
+  const conv = conversation(sid, levelId)
+  const blocked = blockedList(sid, levelId)
+  const turns = []
+  for (let i = 0; i + 1 < conv.length; i += 2) {
+    turns.push({ you: conv[i].content, reply: conv[i + 1].content, blockedAt: blocked[i / 2] ?? null })
+  }
+  return turns
 }
 
 export function resetConversation (sid, levelId) {
-  getSession(sid).conversations.delete(levelId)
+  const s = getSession(sid)
+  s.conversations.delete(levelId)
+  s.blocked.delete(levelId)
 }
 
 export function solvedLevels (sid) {
